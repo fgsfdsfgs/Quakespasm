@@ -223,6 +223,11 @@ typedef struct
 #include "server.h"
 
 #include "platform.h"
+#ifdef __SWITCH__
+#include <SDL2/SDL.h>
+#include <EGL/egl.h>
+#include "glad/glad.h"
+#else
 #if defined(SDL_FRAMEWORK) || defined(NO_SDL_CONFIG)
 #if defined(USE_SDL2)
 #include <SDL2/SDL.h>
@@ -235,6 +240,7 @@ typedef struct
 #include "SDL.h"
 #include "SDL_opengl.h"
 #endif
+#endif // __SWITCH__
 #ifndef APIENTRY
 #define	APIENTRY
 #endif

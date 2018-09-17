@@ -83,7 +83,7 @@
     defined(__sun) || defined(sun)				|| \
     defined(__sgi) || defined(sgi) || defined(__sgi__)		|| \
     defined(__GNU__) /* GNU/Hurd */				|| \
-    defined(__QNX__) || defined(__QNXNTO__)
+    defined(__QNX__) || defined(__QNXNTO__) || defined(__SWITCH__)
 #   if !defined(PLATFORM_UNIX)
 #	define	PLATFORM_UNIX		1
 #   endif

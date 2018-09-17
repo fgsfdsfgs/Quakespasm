@@ -45,7 +45,11 @@ sys_socket_t UDP_Init (void)
 	struct hostent		*local;
 	struct qsockaddr	addr;
 
+#ifndef __SWITCH
+	// currently networking crashes the game at the start on switch
+	// reasons unknown
 	if (COM_CheckParm ("-noudp"))
+#endif
 		return INVALID_SOCKET;
 
 	// determine my name & address
