@@ -36,24 +36,7 @@ APP_VERSION	:=	0.1.0
 
 TARGET		:=	quakespasmnx
 BUILD		:=	build
-SOURCES		:=	\
-	$(wildcard src/game/monster/*) \
-	src/game/player \
-	src/game/savegame \
-	src/game \
-	src/client/menu \
-	src/client \
-	src/client/refresh/gl3_nx/glad \
-	src/client/refresh/gl3_nx \
-	src/client/refresh/files \
-	src/server \
-	src/backends/nx \
-	src/backends/nx/shared \
-	src/backends/generic \
-	src/common \
-	src/common/unzip \
-	src/common/shared
-
+SOURCES		:=
 SOURCEFILES	:=\
 	Quake/bgmusic.c \
 	Quake/snd_codec.c \
