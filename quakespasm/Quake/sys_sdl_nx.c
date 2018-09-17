@@ -200,12 +200,20 @@ void Sys_Error (const char *error, ...)
 {
 	va_list		argptr;
 	char		text[1024];
+	FILE *f;
 
 	host_parms->errstate++;
 
 	va_start (argptr, error);
 	q_vsnprintf (text, sizeof(text), error, argptr);
 	va_end (argptr);
+
+	f = fopen ("/switch/quakespasm/error.log", "w");
+	if (f)
+	{
+		fprintf (f, "Error: %s\n", text);
+		fclose (f);
+	}
 
 	fputs (errortxt1, stderr);
 	Host_Shutdown ();
