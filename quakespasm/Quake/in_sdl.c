@@ -521,10 +521,18 @@ static int IN_KeyForControllerButton(SDL_GameControllerButton button)
 {
 	switch (button)
 	{
+#ifdef __SWITCH__
+		// reversed for some reason
+		case SDL_CONTROLLER_BUTTON_A: return K_BBUTTON;
+		case SDL_CONTROLLER_BUTTON_B: return K_ABUTTON;
+		case SDL_CONTROLLER_BUTTON_X: return K_YBUTTON;
+		case SDL_CONTROLLER_BUTTON_Y: return K_XBUTTON;
+#else
 		case SDL_CONTROLLER_BUTTON_A: return K_ABUTTON;
 		case SDL_CONTROLLER_BUTTON_B: return K_BBUTTON;
 		case SDL_CONTROLLER_BUTTON_X: return K_XBUTTON;
 		case SDL_CONTROLLER_BUTTON_Y: return K_YBUTTON;
+#endif
 		case SDL_CONTROLLER_BUTTON_BACK: return K_TAB;
 		case SDL_CONTROLLER_BUTTON_START: return K_ESCAPE;
 		case SDL_CONTROLLER_BUTTON_LEFTSTICK: return K_LTHUMB;
