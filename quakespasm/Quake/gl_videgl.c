@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "bgmusic.h"
 #include "resource.h"
 
+#include <switch.h>
 #include <SDL2/SDL.h>
 #include <EGL/egl.h>
 #include "glad/glad.h"
@@ -72,6 +73,8 @@ static EGLContext s_context;
 
 static qboolean	vid_locked = false; //johnfitz
 static qboolean	vid_changed = false;
+
+static qboolean fb_big = false;
 
 static void VID_Menu_Init (void); //johnfitz
 static void VID_Menu_f (void); //johnfitz
@@ -388,10 +391,7 @@ VID_GetCurrentWidth
 */
 static int VID_GetCurrentWidth (void)
 {
-	EGLint width = 1280;
-	if (!s_display || !s_surface) return width;
-	eglQuerySurface(s_display, s_surface, EGL_WIDTH, &width);
-	return width;
+	return fb_big ? 1920 : 1280;
 }
 
 /*
@@ -401,10 +401,7 @@ VID_GetCurrentHeight
 */
 static int VID_GetCurrentHeight (void)
 {
-	EGLint height = 720;
-	if (!s_display || !s_surface) return height;
-	eglQuerySurface(s_display, s_surface, EGL_HEIGHT, &height);
-	return height;
+	return fb_big ? 1080 : 720;
 }
 
 /*
@@ -646,8 +643,26 @@ static void VID_Restart (void)
 	int width, height, refreshrate, bpp;
 	qboolean fullscreen;
 
-	if (vid_locked || !vid_changed)
+	if (vid_locked)
 		return;
+
+	// who cares
+	Cvar_SetValueQuick (&vid_fullscreen, 1.f);
+	Cvar_SetValueQuick (&vid_refreshrate, -1.f);
+	Cvar_SetValueQuick (&vid_bpp, 32);
+
+	if (!fb_big)
+	{
+		Cvar_SetValueQuick (&vid_width, 1920.f);
+		Cvar_SetValueQuick (&vid_height, 1080.f);
+		fb_big = true;
+	}
+	else
+	{
+		Cvar_SetValueQuick (&vid_width, 1280.f);
+		Cvar_SetValueQuick (&vid_height, 720.f);
+		fb_big = false;
+	}
 
 	width = (int)vid_width.value;
 	height = (int)vid_height.value;
@@ -655,16 +670,6 @@ static void VID_Restart (void)
 	bpp = (int)vid_bpp.value;
 	fullscreen = vid_fullscreen.value ? true : false;
 
-//
-// validate new mode
-//
-	if (!VID_ValidMode (width, height, refreshrate, bpp, fullscreen))
-	{
-		Con_Printf ("%dx%dx%d %dHz %s is not a valid mode\n",
-				width, height, bpp, refreshrate, fullscreen? "fullscreen" : "windowed");
-		return;
-	}
-	
 // ericw -- OS X, SDL1: textures, VBO's invalid after mode change
 //          OS X, SDL2: still valid after mode change
 // To handle both cases, delete all GL objects (textures, VBO, GLSL) now.
@@ -683,6 +688,7 @@ static void VID_Restart (void)
 // set new mode
 //
 	VID_SetMode (width, height, refreshrate, bpp, fullscreen);
+	gfxConfigureResolution (width, height);
 
 	GL_Init ();
 	TexMgr_ReloadImages ();
@@ -1189,7 +1195,8 @@ GL_BeginRendering -- sets values of glx, gly, glwidth, glheight
 */
 void GL_BeginRendering (int *x, int *y, int *width, int *height)
 {
-	*x = *y = 0;
+	*x = 0;
+	*y = fb_big ? 0 : 720 / 2;
 	*width = vid.width;
 	*height = vid.height;
 }
@@ -1557,6 +1564,27 @@ void	VID_Init (void)
 
 	// set window icon
 	PL_SetWindowIcon();
+
+	// init 1920x1080 framebuffer to allow 1080p graphics when docked
+	gfxInitResolution (1920, 1080);
+
+	if (appletGetOperationMode() == AppletOperationMode_Docked)
+	{
+		gfxConfigureResolution (1920, 1080);
+		width = 1920;
+		height = 1080;
+		fullscreen = true;
+		fb_big = true;
+	}
+	else
+	{
+		// undocked start, crop to 1280x720
+		gfxConfigureResolution (1280, 720);
+		width = 1280;
+		height = 720;
+		fullscreen = true;
+		fb_big = false;
+	}
 
 	// create the SDL stuff right fucking here
 	CreateUselessSDLWindow ();

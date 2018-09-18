@@ -1252,7 +1252,11 @@ void M_Options_Draw (void)
 
 	// OPT_VIDEO:
 	if (vid_menudrawfn)
+#ifdef __SWITCH__
+		M_Print (16, 32 + 8*OPT_VIDEO,	"          Toggle 1080p");
+#else
 		M_Print (16, 32 + 8*OPT_VIDEO,	"         Video Options");
+#endif
 
 // cursor
 	M_DrawCharacter (200, 32 + options_cursor*8, 12+((int)(realtime*4)&1));
@@ -1290,7 +1294,14 @@ void M_Options_Key (int k)
 			}
 			break;
 		case OPT_VIDEO:
+#ifdef __SWITCH__
+			Cbuf_AddText ("vid_restart\n");
+			key_dest = key_game;
+			m_state = m_none;
+			IN_Activate();
+#else
 			M_Menu_Video_f ();
+#endif
 			break;
 		default:
 			M_AdjustSliders (1);
