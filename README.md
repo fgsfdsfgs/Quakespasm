@@ -11,8 +11,6 @@ You can install the libraries with (dkp-)pacman.
 
 Run make -f Makefile.nx in the `quakespasm` directory to build quakespasmnx.nro.
 
-NOTE: building QuakespasmNX currently (Sep 16 2018) requires building the latest commits of libnx and other aforementioned libraries. The current stable versions provided in the corresponding (dkp-)pacman packages might cause glitches and crashes in the hardware renderer.
-
 ## Running
 Place the NRO into `/switch/quakespasm/` on your SD card.
 
