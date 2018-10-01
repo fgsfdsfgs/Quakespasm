@@ -45,11 +45,7 @@ sys_socket_t UDP_Init (void)
 	struct hostent		*local;
 	struct qsockaddr	addr;
 
-#ifndef __SWITCH__
-	// currently networking crashes the game at the start on switch
-	// reasons unknown
 	if (COM_CheckParm ("-noudp"))
-#endif
 		return INVALID_SOCKET;
 
 	// determine my name & address
@@ -63,6 +59,9 @@ sys_socket_t UDP_Init (void)
 	else
 	{
 		buff[MAXHOSTNAMELEN - 1] = 0;
+#ifdef __SWITCH__
+		myAddr = htonl(gethostid());
+#else
 #ifdef PLATFORM_OSX
 		// ericw -- if our hostname ends in ".local" (a macOS thing),
 		// don't bother calling gethostbyname(), because it blocks for a few seconds
@@ -87,6 +86,7 @@ sys_socket_t UDP_Init (void)
 		{
 			myAddr = *(in_addr_t *)local->h_addr_list[0];
 		}
+#endif
 	}
 
 	if ((net_controlsocket = UDP_OpenSocket(0)) == INVALID_SOCKET)
