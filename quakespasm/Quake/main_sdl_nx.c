@@ -68,7 +68,7 @@ static void Sys_InitSDL (void)
 	atexit(Sys_AtExit);
 }
 
-#define DEFAULT_MEMORY (128 * 1024 * 1024) // ericw -- was 72MB (64-bit) / 64MB (32-bit)
+#define DEFAULT_MEMORY (256 * 1024 * 1024) // ericw -- was 72MB (64-bit) / 64MB (32-bit)
 
 static quakeparms_t	parms;
 
@@ -219,6 +219,24 @@ int main(int argc, char *argv[])
 	return Q_main(nargs, (const char **)args);
 }
 
+// returns in megabytes
+static int MemAvailable(void)
+{
+	// use a syscall to get available memory
+	u64 avail = 0;
+
+	// id0 = 6, id1 = 0 => TotalMemoryAvailable
+	Result rc = svcGetInfo( &avail, 6, CUR_PROCESS_HANDLE, 0 );
+
+	// applets get at least like 300 mb, so that's the minimum
+	if ( R_FAILED(rc) ) avail = 304 * 1024 * 1024;
+
+	int mb = (int)( avail / ( 1024 * 1024 ) );
+	// round to the nearest 16Mb
+	mb = ( mb + 8 ) & ~15;
+	return mb;
+}
+
 int Q_main(int argc, char *argv[])
 {
 	int		t;
@@ -245,7 +263,9 @@ int Q_main(int argc, char *argv[])
 
 	Sys_Init();
 
-	parms.memsize = DEFAULT_MEMORY;
+	int mem_mb = MemAvailable();
+	// leave at least 256 MB for stuff, or else it crashes on taxing maps in applet mode
+	parms.memsize = (mem_mb > 512) ? DEFAULT_MEMORY : DEFAULT_MEMORY / 2;
 	if (COM_CheckParm("-heapsize"))
 	{
 		t = COM_CheckParm("-heapsize") + 1;
@@ -263,6 +283,8 @@ int Q_main(int argc, char *argv[])
 	Sys_Printf("FitzQuake %1.2f (c) John Fitzgibbons\n", FITZQUAKE_VERSION);
 	Sys_Printf("FitzQuake SDL port (c) SleepwalkR, Baker\n");
 	Sys_Printf("QuakeSpasm " QUAKESPASM_VER_STRING " (c) Ozkan Sezer, Eric Wasylishen & others\n");
+	Sys_Printf("Available memory: %d MB\n", mem_mb);
+	Sys_Printf("Allocated %d MB for mem base\n", parms.memsize);
 
 	Sys_Printf("Host_Init\n");
 	Host_Init();
