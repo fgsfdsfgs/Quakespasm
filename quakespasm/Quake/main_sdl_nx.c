@@ -325,6 +325,10 @@ int Q_main(int argc, char *argv[])
 		oldtime = newtime;
 	}
 
+	// due to appletLockExit, main loop will terminate if user exits via HOME
+	// so we clean shit up
+	Sys_Quit ();
+
 	return 0;
 }
 

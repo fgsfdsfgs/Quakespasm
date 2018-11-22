@@ -175,6 +175,7 @@ void Sys_Init (void)
 	host_parms->userdir = host_parms->basedir; /* code elsewhere relies on this ! */
 	host_parms->numcpus = Sys_NumCPUs ();
 	Sys_Printf("Detected %d CPUs.\n", host_parms->numcpus);
+	appletLockExit ();
 }
 
 void Sys_mkdir (const char *path)
@@ -223,6 +224,7 @@ void Sys_Error (const char *error, ...)
 	if (!isDedicated)
 		PL_ErrorDialog(text);
 
+	appletUnlockExit ();
 	exit (1);
 }
 
@@ -239,6 +241,7 @@ void Sys_Quit (void)
 {
 	Host_Shutdown();
 
+	appletUnlockExit ();
 	exit (0);
 }
 
