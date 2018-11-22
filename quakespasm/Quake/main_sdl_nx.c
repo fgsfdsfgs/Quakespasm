@@ -87,18 +87,6 @@ static inline int IsDir(const char *path)
 	return 0;
 }
 
-// looks like there's no way to disable the console in libnx, so we improvise
-
-static void UnfuckStdout(void)
-{
-	// consoleInit() has an internal static flag which makes it init devoptabs
-	// only once, so if you want to use the console again, you'll have to 
-	// restore them
-	extern const devoptab_t dotab_stdnull;
-	devoptab_list[STD_OUT] = &dotab_stdnull;
-	devoptab_list[STD_ERR] = &dotab_stdnull;
-}
-
 static void SelectModRedraw(int selected, int nmods, char mods[][128])
 {
 	int i;
@@ -151,7 +139,7 @@ static int SelectMod(int nmods, char mods[][128])
 		oldkeys = keys;
 	}
 
-	UnfuckStdout();
+	consoleExit(NULL);
 	gfxExit();
 
 	return selected;
