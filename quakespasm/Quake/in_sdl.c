@@ -32,6 +32,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "SDL.h"
 #endif
 
+// Some quick hacking 
+#ifdef __SWITCH__
+#include <switch.h>
+#endif
+
 static qboolean	textmode;
 
 static cvar_t in_debugkeys = {"in_debugkeys", "0", CVAR_NONE};
@@ -58,6 +63,12 @@ cvar_t	joy_exponent = { "joy_exponent", "3", CVAR_ARCHIVE };
 cvar_t	joy_exponent_move = { "joy_exponent_move", "3", CVAR_ARCHIVE };
 cvar_t	joy_swapmovelook = { "joy_swapmovelook", "0", CVAR_ARCHIVE };
 cvar_t	joy_enable = { "joy_enable", "1", CVAR_ARCHIVE };
+
+#ifdef __SWITCH__
+// Trying to save gyro sensitivity as cvar
+cvar_t gyro_sens_x = { "gyro_sens_x", "4.0", CVAR_ARCHIVE };
+cvar_t gyro_sens_z = { "gyro_sens_z", "2.0", CVAR_ARCHIVE };
+#endif // __SWITCH__
 
 #if defined(USE_SDL2)
 static SDL_JoystickID joy_active_instaceid = -1;
@@ -375,6 +386,12 @@ void IN_Init (void)
 	Cvar_RegisterVariable(&joy_swapmovelook);
 	Cvar_RegisterVariable(&joy_enable);
 
+// Hacking some vars into config.cfg
+#ifdef __SWITCH__
+	Cvar_RegisterVariable(&gyro_sens_x);
+	Cvar_RegisterVariable(&gyro_sens_z);
+#endif // __SWITCH__
+
 	IN_Activate();
 	IN_StartupJoystick();
 }
@@ -670,6 +687,7 @@ void IN_JoyMove (usercmd_t *cmd)
 	moveRaw.y = joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_LEFTY];
 	lookRaw.x = joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_RIGHTX];
 	lookRaw.y = joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_RIGHTY];
+
 	
 	if (joy_swapmovelook.value)
 	{
@@ -684,6 +702,18 @@ void IN_JoyMove (usercmd_t *cmd)
 	moveEased = IN_ApplyMoveEasing(moveDeadzone, joy_exponent_move.value);
 	lookEased = IN_ApplyEasing(lookDeadzone, joy_exponent.value);
 	
+#ifdef __SWITCH__
+	// Hack switch gyro aim here
+	hidScanInput();
+	SixAxisSensorValues sixaxis;
+	hidSixAxisSensorValuesRead(&sixaxis, CONTROLLER_P1_AUTO, 1);
+
+	// Horizontal look controlled by gyro axis Z
+	lookEased.x -= (gyro_sens_z.value * sixaxis.gyroscope.z);
+	// Vertical look controlled by gyro axis X
+	lookEased.y -= (gyro_sens_x.value * sixaxis.gyroscope.x);
+#endif // __SWITCH__
+
 	if ((in_speed.state & 1) ^ (cl_alwaysrun.value != 0.0))
 		speed = cl_movespeedkey.value;
 	else
@@ -851,7 +881,7 @@ static inline int IN_SDL_KeysymToQuakeKey(SDLKey sym)
 	case SDLK_BREAK: return K_PAUSE;
 	case SDLK_PAUSE: return K_PAUSE;
 
-	case SDLK_WORLD_18: return '~'; // the '²' key
+	case SDLK_WORLD_18: return '~'; // the 'ï¿½' key
 
 	default: return 0;
 	}

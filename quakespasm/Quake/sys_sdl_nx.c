@@ -167,6 +167,26 @@ static void Sys_GetBasedir (char *argv0, char *dst, size_t dstsize)
 	}
 }
 
+// Global nx sixaxis handles. Declared in quakedef.h. Inititialize it.
+unsigned int sixaxis_handles[3] = {0, 0, 0};
+
+void Sys_Init_Sixaxis_Nx (void) 
+{
+	hidGetSixAxisSensorHandles(&sixaxis_handles[0], 2, CONTROLLER_PLAYER_1, TYPE_JOYCON_PAIR);
+    hidGetSixAxisSensorHandles(&sixaxis_handles[2], 1, CONTROLLER_PLAYER_1, TYPE_PROCONTROLLER);
+	hidStartSixAxisSensor(sixaxis_handles[0]);
+    hidStartSixAxisSensor(sixaxis_handles[1]);
+    hidStartSixAxisSensor(sixaxis_handles[2]);
+}
+
+// Note: remember to deinitialize on sys exit
+void Sys_Deinit_Sixaxis_Nx (void) 
+{
+	hidStopSixAxisSensor(sixaxis_handles[0]);
+    hidStopSixAxisSensor(sixaxis_handles[1]);
+    hidStopSixAxisSensor(sixaxis_handles[2]);
+}
+
 void Sys_Init (void)
 {
 	memset (cwd, 0, sizeof(cwd));
@@ -175,6 +195,10 @@ void Sys_Init (void)
 	host_parms->userdir = host_parms->basedir; /* code elsewhere relies on this ! */
 	host_parms->numcpus = Sys_NumCPUs ();
 	Sys_Printf("Detected %d CPUs.\n", host_parms->numcpus);
+
+	// Ok lets go. Initializing nx sixaxis sensor
+	Sys_Init_Sixaxis_Nx();
+
 	appletLockExit ();
 }
 
@@ -224,6 +248,10 @@ void Sys_Error (const char *error, ...)
 	if (!isDedicated)
 		PL_ErrorDialog(text);
 
+
+	// I'm scared
+	Sys_Deinit_Sixaxis_Nx();
+
 	appletUnlockExit ();
 	exit (1);
 }
@@ -239,6 +267,9 @@ void Sys_Printf (const char *fmt, ...)
 
 void Sys_Quit (void)
 {
+	// Hope it works
+	Sys_Deinit_Sixaxis_Nx();
+
 	Host_Shutdown();
 
 	appletUnlockExit ();
