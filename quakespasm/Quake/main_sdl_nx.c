@@ -230,8 +230,8 @@ int Q_main(int argc, char *argv[])
 	int		t;
 	double		time, oldtime, newtime;
 
-	socketInitializeDefault ();
 #ifdef DEBUG
+	socketInitializeDefault ();
 	nxlinkStdio ();
 #endif
 
