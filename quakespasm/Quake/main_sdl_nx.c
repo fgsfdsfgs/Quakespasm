@@ -254,6 +254,7 @@ int Q_main(int argc, char *argv[])
 	int mem_mb = MemAvailable();
 	// leave at least 256 MB for stuff, or else it crashes on taxing maps in applet mode
 	parms.memsize = (mem_mb > 512) ? DEFAULT_MEMORY : DEFAULT_MEMORY / 2;
+
 	if (COM_CheckParm("-heapsize"))
 	{
 		t = COM_CheckParm("-heapsize") + 1;

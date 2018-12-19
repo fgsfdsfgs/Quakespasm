@@ -994,6 +994,11 @@ enum
 //	OPT_USEMOUSE,
 //#endif
 	OPT_VIDEO,	// This is the last before OPTIONS_ITEMS
+#ifdef __SWITCH__
+	OPT_GYRO_AIM, // hacking in menu for gyro aim
+	OPT_GYRO_HOR,
+	OPT_GYRO_VER, 
+#endif
 	OPTIONS_ITEMS
 };
 
@@ -1130,6 +1135,20 @@ void M_AdjustSliders (int dir)
 	case OPT_LOOKSTRAFE:	// lookstrafe
 		Cvar_Set ("lookstrafe", lookstrafe.value ? "0" : "1");
 		break;
+#ifdef __SWITCH__
+	case OPT_GYRO_HOR:
+		f = gyro_sens_z.value + dir * 0.1;
+		if ( f < 0.10 ) f = 0.10;
+		if ( f > 10.0 ) f = 10.0;
+		Cvar_SetValue( "gyro_sens_z", f );
+		break;
+	case OPT_GYRO_VER:
+		f = gyro_sens_x.value + dir * 0.1;
+		if ( f < 0.10 ) f = 0.10;
+		if ( f > 10.0 ) f = 10.0;
+		Cvar_SetValue( "gyro_sens_x", f );
+		break;
+#endif
 	}
 }
 
@@ -1253,7 +1272,20 @@ void M_Options_Draw (void)
 	// OPT_VIDEO:
 	if (vid_menudrawfn)
 #ifdef __SWITCH__
-		M_Print (16, 32 + 8*OPT_VIDEO,	"          Toggle 1080p");
+// draw menu option related to switch
+		M_Print (16, 32 + 8*OPT_VIDEO,	  "          Toggle 1080p");
+
+		M_Print (16, 32 + 8*OPT_GYRO_AIM, "           Gyro aiming");
+		M_DrawCheckbox (220, 32 + 8*OPT_GYRO_AIM, gyro_aiming.value);
+
+		M_Print (16, 32 + 8*OPT_GYRO_HOR, " Gyro horizontal sens.");
+		r = gyro_sens_z.value / 10.0;
+		M_DrawSlider (220, 32 + 8*OPT_GYRO_HOR, r);
+
+		M_Print (16, 32 + 8*OPT_GYRO_VER, "   Gyro vertical sens.");
+		r = gyro_sens_x.value / 10.0;
+		M_DrawSlider (220, 32 + 8*OPT_GYRO_VER, r);
+
 #else
 		M_Print (16, 32 + 8*OPT_VIDEO,	"         Video Options");
 #endif
@@ -1303,6 +1335,14 @@ void M_Options_Key (int k)
 			M_Menu_Video_f ();
 #endif
 			break;
+
+#ifdef __SWITCH__
+// option for turning gyro aim on/off
+		case OPT_GYRO_AIM:
+			if ( gyro_aiming.value ) Cvar_SetValue( "gyro_aiming", 0.0 );
+			else Cvar_SetValue( "gyro_aiming", 1.0 );
+		break;
+#endif
 		default:
 			M_AdjustSliders (1);
 			break;

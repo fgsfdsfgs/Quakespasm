@@ -66,6 +66,7 @@ cvar_t	joy_enable = { "joy_enable", "1", CVAR_ARCHIVE };
 
 #ifdef __SWITCH__
 // Trying to save gyro sensitivity as cvar
+cvar_t gyro_aiming = { "gyro_aiming", "1.0", CVAR_ARCHIVE };
 cvar_t gyro_sens_x = { "gyro_sens_x", "4.0", CVAR_ARCHIVE };
 cvar_t gyro_sens_z = { "gyro_sens_z", "2.0", CVAR_ARCHIVE };
 #endif // __SWITCH__
@@ -388,8 +389,9 @@ void IN_Init (void)
 
 // Hacking some vars into config.cfg
 #ifdef __SWITCH__
-	Cvar_RegisterVariable(&gyro_sens_x);
-	Cvar_RegisterVariable(&gyro_sens_z);
+	Cvar_RegisterVariable( &gyro_aiming );
+	Cvar_RegisterVariable( &gyro_sens_x );
+	Cvar_RegisterVariable( &gyro_sens_z );
 #endif // __SWITCH__
 
 	IN_Activate();
@@ -704,14 +706,16 @@ void IN_JoyMove (usercmd_t *cmd)
 	
 #ifdef __SWITCH__
 	// Hack switch gyro aim here
-	hidScanInput();
-	SixAxisSensorValues sixaxis;
-	hidSixAxisSensorValuesRead(&sixaxis, CONTROLLER_P1_AUTO, 1);
+	if ( gyro_aiming.value ) {
+		hidScanInput();
+		SixAxisSensorValues sixaxis;
+		hidSixAxisSensorValuesRead(&sixaxis, CONTROLLER_P1_AUTO, 1);
 
-	// Horizontal look controlled by gyro axis Z
-	lookEased.x -= (gyro_sens_z.value * sixaxis.gyroscope.z);
-	// Vertical look controlled by gyro axis X
-	lookEased.y -= (gyro_sens_x.value * sixaxis.gyroscope.x);
+		// Horizontal look controlled by gyro axis Z
+		lookEased.x -= (gyro_sens_z.value * sixaxis.gyroscope.z);
+		// Vertical look controlled by gyro axis X
+		lookEased.y -= (gyro_sens_x.value * sixaxis.gyroscope.x);
+	}
 #endif // __SWITCH__
 
 	if ((in_speed.state & 1) ^ (cl_alwaysrun.value != 0.0))

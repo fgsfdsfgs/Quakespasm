@@ -1052,18 +1052,24 @@ void SCR_UpdateScreen (void)
 
 	if (scr_disabled_for_loading)
 	{
+
 		if (realtime - scr_disabled_time > 60)
 		{
+			// This is the last thing to run before the crash.
+			// So, something causes the condition be met and
+			// so this means the game cant load? And it crashes?!
+
 			scr_disabled_for_loading = false;
 			Con_Printf ("load failed.\n");
 		}
 		else
+		{
 			return;
+		}
 	}
 
 	if (!scr_initialized || !con_initialized)
 		return;				// not initialized yet
-
 
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
 

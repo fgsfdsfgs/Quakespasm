@@ -1569,23 +1569,12 @@ void	VID_Init (void)
 	// init 1920x1080 framebuffer to allow 1080p graphics when docked
 	gfxInitResolution (1920, 1080);
 
-	if (appletGetOperationMode() == AppletOperationMode_Docked)
-	{
-		gfxConfigureResolution (1920, 1080);
-		width = 1920;
-		height = 1080;
-		fullscreen = true;
-		fb_big = true;
-	}
-	else
-	{
-		// undocked start, crop to 1280x720
-		gfxConfigureResolution (1280, 720);
-		width = 1280;
-		height = 720;
-		fullscreen = true;
-		fb_big = false;
-	}
+	// start at 720p to avoid crash on stage load when running on low memory (applet mode)
+	gfxConfigureResolution (1280, 720);
+	width = 1280;
+	height = 720;
+	fullscreen = true;
+	fb_big = false;
 
 	// create the SDL stuff right fucking here
 	CreateUselessSDLWindow ();
