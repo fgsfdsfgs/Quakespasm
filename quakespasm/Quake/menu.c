@@ -991,6 +991,10 @@ enum
 	OPT_GAMMA,
 	OPT_CONTRAST,
 	OPT_MOUSESPEED,
+#ifdef __SWITCH__
+	OPT_GYRO_HOR,
+	OPT_GYRO_VER,
+#endif
 	OPT_SBALPHA,
 	OPT_SNDVOL,
 	OPT_MUSICVOL,
@@ -1001,6 +1005,7 @@ enum
 	OPT_LOOKSPRING,
 	OPT_LOOKSTRAFE,
 #ifdef __SWITCH__
+	OPT_GYRO_ON,
 	OPT_MODS,
 #endif
 //#ifdef _WIN32
@@ -1073,6 +1078,23 @@ void M_AdjustSliders (int dir)
 		else if (f < 1)	f = 1;
 		Cvar_SetValue ("sensitivity", f);
 		break;
+#ifdef __SWITCH__
+	case OPT_GYRO_ON:	// gyro aiming
+		Cvar_Set ("gyro_enable", gyro_enable.value ? "0" : "1");
+		break;
+	case OPT_GYRO_HOR:	// horz gyro speed
+		f = gyro_sens_z.value + dir * 0.1;
+		if (f < 0.10) f = 0.10;
+		else if (f > 10.0) f = 10.0;
+		Cvar_SetValue ("gyro_sensitivity_z", f);
+		break;
+	case OPT_GYRO_VER:	// vert gyro speed
+		f = gyro_sens_x.value + dir * 0.1;
+		if (f < 0.10) f = 0.10;
+		else if (f > 10.0) f = 10.0;
+		Cvar_SetValue ("gyro_sensitivity_x", f);
+		break;
+#endif
 	case OPT_SBALPHA:	// statusbar alpha
 		f = scr_sbaralpha.value - dir * 0.05;
 		if (f < 0)	f = 0;
@@ -1213,11 +1235,27 @@ void M_Options_Draw (void)
 	M_Print (16, 32 + 8*OPT_CONTRAST,	"              Contrast");
 	r = vid_contrast.value - 1.0;
 	M_DrawSlider (220, 32 + 8*OPT_CONTRAST, r);
-	
+
 	// OPT_MOUSESPEED:
 	M_Print (16, 32 + 8*OPT_MOUSESPEED,	"           Mouse Speed");
 	r = (sensitivity.value - 1)/10;
 	M_DrawSlider (220, 32 + 8*OPT_MOUSESPEED, r);
+
+#ifdef __SWITCH__
+	// OPT_GYRO_ON:
+	M_Print (16, 32 + 8*OPT_GYRO_ON,	"           Gyro Aiming");
+	M_DrawCheckbox (220, 32 + 8*OPT_GYRO_ON, gyro_enable.value);
+
+	// OPT_GYRO_HOR:
+	M_Print (16, 32 + 8*OPT_GYRO_HOR,	"          Gyro X Speed");
+	r = gyro_sens_z.value / 10.0;
+	M_DrawSlider (220, 32 + 8*OPT_GYRO_HOR, r);
+
+	// OPT_GYRO_VER:
+	M_Print (16, 32 + 8*OPT_GYRO_VER,	"          Gyro Y Speed");
+	r = gyro_sens_x.value / 10.0;
+	M_DrawSlider (220, 32 + 8*OPT_GYRO_VER, r);
+#endif
 
 	// OPT_SBALPHA:
 	M_Print (16, 32 + 8*OPT_SBALPHA,	"       Statusbar alpha");
