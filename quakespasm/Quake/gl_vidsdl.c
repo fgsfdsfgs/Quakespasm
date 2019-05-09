@@ -41,6 +41,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <OpenGL/OpenGL.h>
 #endif
 
+#ifdef __SWITCH__
+#include "glad/glad.h"
+#endif
+
 #define MAX_MODE_LIST	600 //johnfitz -- was 30
 #define MAX_BPPS_LIST	5
 #define MAX_RATES_LIST	20
@@ -609,15 +613,26 @@ static qboolean VID_SetMode (int width, int height, int refreshrate, int bpp, qb
 
 	q_snprintf(caption, sizeof(caption), "QuakeSpasm " QUAKESPASM_VER_STRING);
 
+#ifdef __SWITCH__
+	/* Force GL 3.2 compatibility profile */
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+#endif
+
 #if defined(USE_SDL2)
 	/* Create the window if needed, hidden */
 	if (!draw_context)
 	{
+#ifdef __SWITCH__
+		flags = SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN;
+		draw_context = SDL_CreateWindow (caption, 0, 0, width, height, flags);
+#else
 		flags = SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN;
 
 		if (vid_borderless.value)
 			flags |= SDL_WINDOW_BORDERLESS;
-		
+
 		draw_context = SDL_CreateWindow (caption, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
 		if (!draw_context) { // scale back fsaa
 			SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
@@ -632,6 +647,8 @@ static qboolean VID_SetMode (int width, int height, int refreshrate, int bpp, qb
 			SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
 			draw_context = SDL_CreateWindow (caption, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
 		}
+#endif
+
 		if (!draw_context)
 			Sys_Error ("Couldn't create window");
 
@@ -642,15 +659,18 @@ static qboolean VID_SetMode (int width, int height, int refreshrate, int bpp, qb
 		previous_display = SDL_GetWindowDisplayIndex(draw_context);
 	}
 
+#ifndef __SWITCH__
 	/* Ensure the window is not fullscreen */
 	if (VID_GetFullscreen ())
 	{
 		if (SDL_SetWindowFullscreen (draw_context, 0) != 0)
 			Sys_Error("Couldn't set fullscreen state mode");
 	}
+#endif
 
 	/* Set window size and display mode */
 	SDL_SetWindowSize (draw_context, width, height);
+#ifndef __SWITCH__
 	if (previous_display >= 0)
 		SDL_SetWindowPosition (draw_context, SDL_WINDOWPOS_CENTERED_DISPLAY(previous_display), SDL_WINDOWPOS_CENTERED_DISPLAY(previous_display));
 	else
@@ -669,12 +689,18 @@ static qboolean VID_SetMode (int width, int height, int refreshrate, int bpp, qb
 	}
 
 	SDL_ShowWindow (draw_context);
+#endif
 
 	/* Create GL context if needed */
 	if (!gl_context) {
 		gl_context = SDL_GL_CreateContext(draw_context);
 		if (!gl_context)
 			Sys_Error("Couldn't create GL context");
+#ifdef __SWITCH__
+		/* Load OpenGL functions */
+		if (!gladLoadGLLoader(SDL_GL_GetProcAddress))
+			Sys_Error("Couldn't load GL function pointers: %s\n", SDL_GetError());
+#endif
 	}
 
 	gl_swap_control = true;
@@ -1356,7 +1382,14 @@ GL_BeginRendering -- sets values of glx, gly, glwidth, glheight
 */
 void GL_BeginRendering (int *x, int *y, int *width, int *height)
 {
+#ifdef __SWITCH__
+	// HACK: our SDL2 impl ignores window position, nwindow crop starts from top,
+	//       GL image starts from bottom
+	*x = 0;
+	*y = 1080 - vid.height;
+#else
 	*x = *y = 0;
+#endif
 	*width = vid.width;
 	*height = vid.height;
 }
