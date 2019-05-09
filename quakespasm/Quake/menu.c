@@ -80,6 +80,16 @@ void M_Main_Key (int key);
 	void M_Help_Key (int key);
 	void M_Quit_Key (int key);
 
+#ifdef __SWITCH__
+void M_Mods_Key (int key);
+void M_Mods_Draw (void);
+void M_Menu_Mods_f (void);
+
+void M_Maps_Key (int key);
+void M_Maps_Draw (void);
+void M_Menu_Maps_f (void);
+#endif
+
 qboolean	m_entersound;		// play after drawing a frame, so caching
 								// won't disrupt the sound
 qboolean	m_recursiveDraw;
@@ -990,6 +1000,9 @@ enum
 	OPT_ALWAYSMLOOK,
 	OPT_LOOKSPRING,
 	OPT_LOOKSTRAFE,
+#ifdef __SWITCH__
+	OPT_MODS,
+#endif
 //#ifdef _WIN32
 //	OPT_USEMOUSE,
 //#endif
@@ -1250,13 +1263,14 @@ void M_Options_Draw (void)
 	M_Print (16, 32 + 8*OPT_LOOKSTRAFE,	"            Lookstrafe");
 	M_DrawCheckbox (220, 32 + 8*OPT_LOOKSTRAFE, lookstrafe.value);
 
+#ifdef __SWITCH__
+	// OPT_MODS
+	M_Print (16, 32 + 8*OPT_MODS,	"            Select Mod");
+#endif
+
 	// OPT_VIDEO:
 	if (vid_menudrawfn)
-#ifdef __SWITCH__
-		M_Print (16, 32 + 8*OPT_VIDEO,	"          Toggle 1080p");
-#else
 		M_Print (16, 32 + 8*OPT_VIDEO,	"         Video Options");
-#endif
 
 // cursor
 	M_DrawCharacter (200, 32 + options_cursor*8, 12+((int)(realtime*4)&1));
@@ -1293,15 +1307,13 @@ void M_Options_Key (int k)
 				Cbuf_AddText ("exec default.cfg\n");
 			}
 			break;
-		case OPT_VIDEO:
 #ifdef __SWITCH__
-			Cbuf_AddText ("vid_restart\n");
-			key_dest = key_game;
-			m_state = m_none;
-			IN_Activate();
-#else
-			M_Menu_Video_f ();
+		case OPT_MODS:
+			M_Menu_Mods_f ();
+			break;
 #endif
+		case OPT_VIDEO:
+			M_Menu_Video_f ();
 			break;
 		default:
 			M_AdjustSliders (1);
@@ -2505,6 +2517,7 @@ void M_ServerList_Key (int k)
 		break;
 
 	case K_SPACE:
+	case K_YBUTTON:
 		M_Menu_Search_f ();
 		break;
 
@@ -2542,6 +2555,108 @@ void M_ServerList_Key (int k)
 	}
 
 }
+
+#ifdef __SWITCH__
+//=============================================================================
+/* Mod selector menu, see Modlist_* in host_cmd.c */
+
+static filelist_item_t *mod_selected = NULL;
+
+static void ChangeGame (char *mod)
+{
+	// remember the mod we're running so it runs again on startup
+	FILE *f = fopen("launch.rc", "w");
+	if (f)
+	{
+		fprintf(f, "%s", mod);
+		fclose(f);
+	}
+	// change game
+	Cbuf_AddText( va ("game %s\n", mod) );
+}
+
+void M_Mods_Key (int k)
+{
+	filelist_item_t *mod, *target;
+
+	switch (k)
+	{
+	case K_ESCAPE:
+	case K_BBUTTON:
+		M_Menu_Options_f ();
+		break;
+
+	case K_DOWNARROW:
+	case K_RIGHTARROW:
+		S_LocalSound ("misc/menu1.wav");
+		if (mod_selected && mod_selected->next)
+			mod_selected = mod_selected->next;
+		else
+			mod_selected = modlist;
+		break;
+
+	case K_UPARROW:
+	case K_LEFTARROW:
+		S_LocalSound ("misc/menu1.wav");
+		if (mod_selected)
+		{
+			target = mod_selected == modlist ? NULL : mod_selected;
+			for (mod = modlist; mod && mod->next != target; mod = mod->next);
+			mod_selected = mod;
+		}
+		break;
+
+	case K_ENTER:
+	case K_KP_ENTER:
+	case K_ABUTTON:
+		if (mod_selected)
+		{
+			S_LocalSound ("misc/menu2.wav");
+			IN_Activate();
+			key_dest = key_game;
+			m_state = m_none;
+			ChangeGame (mod_selected->name);
+		}
+		break;
+
+	default:
+		break;
+	}
+}
+
+void M_Mods_Draw (void)
+{
+	int	n, i = 0;
+	char *tmp;
+	filelist_item_t	*mod;
+
+	M_PrintWhite (160 - 13*8, 0, "Detected game directories:");
+	for (mod = modlist, n=0; mod; mod = mod->next, n++)
+	{
+		M_Print (160 - 13*8, 16 + 8*n, mod->name);
+		if (mod == mod_selected) i = n;
+	}
+
+	if (n)
+		M_DrawCharacter (160 - 15*8, 16 + i*8, 12+((int)(realtime*4)&1));
+	else
+		M_Print (160 - 13*8, 16, "No mods in current directory.");
+
+	tmp = va("Current game directory: %s", com_gamedir);
+	M_PrintWhite (160 - strlen(tmp)*4, 200 - 32, tmp);
+	M_PrintWhite (160 - 13*8, 200 - 16, "Select new game directory");
+	M_PrintWhite (160 - 13*8, 200 -  8, " and press A to restart.");
+}
+
+void M_Menu_Mods_f (void)
+{
+	IN_Deactivate(modestate == MS_WINDOWED);
+	key_dest = key_menu;
+	m_state = m_mods;
+	m_entersound = true;
+	mod_selected = modlist;
+}
+#endif
 
 //=============================================================================
 /* Menu Subsystem */
@@ -2661,6 +2776,12 @@ void M_Draw (void)
 	case m_slist:
 		M_ServerList_Draw ();
 		break;
+#ifdef __SWITCH__
+
+	case m_mods:
+		M_Mods_Draw ();
+		break;
+#endif
 	}
 
 	if (m_entersound)
@@ -2743,6 +2864,13 @@ void M_Keydown (int key)
 	case m_slist:
 		M_ServerList_Key (key);
 		return;
+
+#ifdef __SWITCH__
+
+	case m_mods:
+		M_Mods_Key (key);
+		break;
+#endif
 	}
 }
 
