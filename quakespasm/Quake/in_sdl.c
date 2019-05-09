@@ -66,8 +66,9 @@ cvar_t	joy_enable = { "joy_enable", "1", CVAR_ARCHIVE };
 
 #ifdef __SWITCH__
 cvar_t	gyro_enable = { "gyro_enable", "0", CVAR_ARCHIVE };
-cvar_t	gyro_sens_x = { "gyro_sensitivity_x", "4.0", CVAR_ARCHIVE };
-cvar_t	gyro_sens_z = { "gyro_sensitivity_z", "2.0", CVAR_ARCHIVE };
+cvar_t	gyro_invert = { "gyro_invert", "0", CVAR_ARCHIVE };
+cvar_t	gyro_sens_x = { "gyro_sensitivity_x", "3.0", CVAR_ARCHIVE };
+cvar_t	gyro_sens_z = { "gyro_sensitivity_z", "4.0", CVAR_ARCHIVE };
 #endif // __SWITCH__
 
 #if defined(USE_SDL2)
@@ -224,6 +225,7 @@ static void IN_StartupSixaxis (void)
 	hidStartSixAxisSensor(sixaxis_handles[2]);
 
 	Cvar_RegisterVariable(&gyro_enable);
+	Cvar_RegisterVariable(&gyro_invert);
 	Cvar_RegisterVariable(&gyro_sens_x);
 	Cvar_RegisterVariable(&gyro_sens_z);
 }
@@ -751,7 +753,7 @@ void IN_JoyMove (usercmd_t *cmd)
 		// Horizontal look controlled by gyro axis Z
 		cl.viewangles[YAW] += lookEased.x * 100.0 * gyro_sens_z.value * host_frametime;
 		// Vertical look controlled by gyro axis X
-		cl.viewangles[PITCH] -= lookEased.y * 100.0 * gyro_sens_x.value * host_frametime;
+		cl.viewangles[PITCH] -= lookEased.y * 100.0 * (gyro_invert.value ? -1.0 : 1.0) * gyro_sens_x.value * host_frametime;
 	}
 #endif // __SWITCH__
 
