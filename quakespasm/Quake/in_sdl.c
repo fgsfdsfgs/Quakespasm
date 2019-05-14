@@ -68,7 +68,7 @@ cvar_t	joy_enable = { "joy_enable", "1", CVAR_ARCHIVE };
 cvar_t	gyro_enable = { "gyro_enable", "0", CVAR_ARCHIVE };
 cvar_t	gyro_invert = { "gyro_invert", "0", CVAR_ARCHIVE };
 cvar_t	gyro_sens_x = { "gyro_sensitivity_x", "3.0", CVAR_ARCHIVE };
-cvar_t	gyro_sens_z = { "gyro_sensitivity_z", "4.0", CVAR_ARCHIVE };
+cvar_t	gyro_sens_z = { "gyro_sensitivity_z", "3.0", CVAR_ARCHIVE };
 #endif // __SWITCH__
 
 #if defined(USE_SDL2)
@@ -745,15 +745,18 @@ void IN_JoyMove (usercmd_t *cmd)
 	{
 		// Gyro aiming
 		hidScanInput();
-		SixAxisSensorValues sixaxis;
+		SixAxisSensorValues sixaxis = { 0 };
 		hidSixAxisSensorValuesRead(&sixaxis, CONTROLLER_P1_AUTO, 1);
-		// Needed for StopPitchDrift below
-		lookEased.x = sixaxis.gyroscope.z;
-		lookEased.y = sixaxis.gyroscope.x;
-		// Horizontal look controlled by gyro axis Z
-		cl.viewangles[YAW] += lookEased.x * 100.0 * gyro_sens_z.value * host_frametime;
-		// Vertical look controlled by gyro axis X
-		cl.viewangles[PITCH] -= lookEased.y * 100.0 * (gyro_invert.value ? -1.0 : 1.0) * gyro_sens_x.value * host_frametime;
+		if (sixaxis.gyroscope.z || sixaxis.gyroscope.x)
+		{
+			// Needed for StopPitchDrift below
+			lookEased.x = sixaxis.gyroscope.z;
+			lookEased.y = sixaxis.gyroscope.x;
+			// Horizontal look controlled by gyro axis Z
+			cl.viewangles[YAW] += lookEased.x * 100.0 * gyro_sens_z.value * host_frametime;
+			// Vertical look controlled by gyro axis X
+			cl.viewangles[PITCH] -= lookEased.y * 100.0 * (gyro_invert.value ? -1.0 : 1.0) * gyro_sens_x.value * host_frametime;
+		}
 	}
 #endif // __SWITCH__
 
