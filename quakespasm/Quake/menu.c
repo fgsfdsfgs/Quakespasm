@@ -812,7 +812,17 @@ forward:
 		M_Menu_MultiPlayer_f ();
 		break;
 
+#ifdef __SWITCH__
+	case K_YBUTTON:
+		if (setup_cursor == 0)
+			IN_SwitchKeyboard(setup_hostname, 16);
+		else if (setup_cursor == 1)
+			IN_SwitchKeyboard(setup_myname, 16);
+		break;
+#endif
+
 	case K_BACKSPACE:
+	case K_XBUTTON:
 		if (setup_cursor == 0)
 		{
 			if (strlen(setup_hostname))
@@ -1553,6 +1563,7 @@ void M_Keys_Key (int k)
 		break;
 
 	case K_BACKSPACE:	// delete bindings
+	case K_XBUTTON:
 	case K_DEL:
 		S_LocalSound ("misc/menu2.wav");
 		M_UnbindCommand (bindnames[keys_cursor][0]);
@@ -2063,6 +2074,16 @@ void M_LanConfig_Key (int key)
 
 		break;
 
+#ifdef __SWITCH__
+	case K_YBUTTON:
+		if (lanConfig_cursor == 2)
+			IN_SwitchKeyboard(lanConfig_joinname, 22);
+		else if (lanConfig_cursor == 0)
+			IN_SwitchKeyboard(lanConfig_portname, 6);
+		break;
+#endif
+
+	case K_XBUTTON:
 	case K_BACKSPACE:
 		if (lanConfig_cursor == 0)
 		{

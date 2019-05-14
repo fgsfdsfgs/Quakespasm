@@ -53,5 +53,9 @@ void IN_Activate ();
 // called when the app becomes inactive
 void IN_Deactivate (qboolean free_cursor);
 
+#ifdef __SWITCH__
+qboolean IN_SwitchKeyboard(char *out, int out_len);
+#endif
+
 #endif	/* _QUAKE_INPUT_H */
 

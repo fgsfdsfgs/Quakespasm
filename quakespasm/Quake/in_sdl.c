@@ -1208,3 +1208,31 @@ void IN_SendKeyEvents (void)
 	}
 }
 
+#ifdef __SWITCH__
+qboolean IN_SwitchKeyboard(char *out, int out_len)
+{
+	SwkbdConfig kbd;
+	char tmp_out[out_len + 1];
+	Result rc;
+	tmp_out[0] = 0;
+
+	Key_ClearStates();
+
+	rc = swkbdCreate(&kbd, 0);
+	if (R_SUCCEEDED(rc))
+	{
+		swkbdConfigMakePresetDefault(&kbd);
+		swkbdConfigSetInitialText(&kbd, out);
+		rc = swkbdShow(&kbd, tmp_out, out_len);
+		if (R_SUCCEEDED(rc))
+			strncpy(out, tmp_out, out_len); 
+		swkbdClose(&kbd);
+	}
+
+	// gotta do this or events get stuck
+	SDL_PumpEvents();
+	SDL_FlushEvents(SDL_KEYDOWN, SDL_CONTROLLERBUTTONUP);
+
+	return R_SUCCEEDED(rc);
+}
+#endif
