@@ -107,7 +107,10 @@ static void CheckAutoload(void)
 	fscanf(rc, "%63s", autoload_game);
 	fclose(rc);
 
-	if (!autoload_game[0]) return;
+	// don't do -game id1, it doesn't load quakespasm.pak then
+	if (!autoload_game[0] || !strcasecmp(autoload_game, "id1"))
+		return;
+
 	if (fake_argc >= MAX_NUM_ARGVS) return;
 
 	fake_argv[fake_argc++] = "-game";
