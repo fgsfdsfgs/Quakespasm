@@ -1382,14 +1382,7 @@ GL_BeginRendering -- sets values of glx, gly, glwidth, glheight
 */
 void GL_BeginRendering (int *x, int *y, int *width, int *height)
 {
-#ifdef __SWITCH__
-	// HACK: our SDL2 impl ignores window position, nwindow crop starts from top,
-	//       GL image starts from bottom
-	*x = 0;
-	*y = 1080 - vid.height;
-#else
 	*x = *y = 0;
-#endif
 	*width = vid.width;
 	*height = vid.height;
 }
