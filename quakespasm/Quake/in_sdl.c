@@ -220,9 +220,11 @@ static void IN_StartupSixaxis (void)
 {
 	hidGetSixAxisSensorHandles(&sixaxis_handles[0], 2, CONTROLLER_PLAYER_1, TYPE_JOYCON_PAIR);
 	hidGetSixAxisSensorHandles(&sixaxis_handles[2], 1, CONTROLLER_PLAYER_1, TYPE_PROCONTROLLER);
+	hidGetSixAxisSensorHandles(&sixaxis_handles[3], 1, CONTROLLER_PLAYER_1, TYPE_HANDHELD);
 	hidStartSixAxisSensor(sixaxis_handles[0]);
 	hidStartSixAxisSensor(sixaxis_handles[1]);
 	hidStartSixAxisSensor(sixaxis_handles[2]);
+	hidStartSixAxisSensor(sixaxis_handles[3]);
 
 	Cvar_RegisterVariable(&gyro_enable);
 	Cvar_RegisterVariable(&gyro_invert);
