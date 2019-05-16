@@ -41,6 +41,7 @@ void M_Menu_Main_f (void);
 		void M_Menu_Search_f (void);
 		void M_Menu_ServerList_f (void);
 	void M_Menu_Options_f (void);
+		void M_Menu_Joy_f (void);
 		void M_Menu_Keys_f (void);
 		void M_Menu_Video_f (void);
 	void M_Menu_Help_f (void);
@@ -58,6 +59,7 @@ void M_Main_Draw (void);
 		void M_Search_Draw (void);
 		void M_ServerList_Draw (void);
 	void M_Options_Draw (void);
+		void M_Joy_Draw (void);
 		void M_Keys_Draw (void);
 		void M_Video_Draw (void);
 	void M_Help_Draw (void);
@@ -75,10 +77,17 @@ void M_Main_Key (int key);
 		void M_Search_Key (int key);
 		void M_ServerList_Key (int key);
 	void M_Options_Key (int key);
+		void M_Joy_Key (int key);
 		void M_Keys_Key (int key);
 		void M_Video_Key (int key);
 	void M_Help_Key (int key);
 	void M_Quit_Key (int key);
+
+#ifdef __SWITCH__
+void M_Mods_Key (int key);
+void M_Mods_Draw (void);
+void M_Menu_Mods_f (void);
+#endif
 
 qboolean	m_entersound;		// play after drawing a frame, so caching
 								// won't disrupt the sound
@@ -803,7 +812,17 @@ forward:
 		M_Menu_MultiPlayer_f ();
 		break;
 
+#ifdef __SWITCH__
+	case K_YBUTTON:
+		if (setup_cursor == 0)
+			IN_SwitchKeyboard(setup_hostname, 16);
+		else if (setup_cursor == 1)
+			IN_SwitchKeyboard(setup_myname, 16);
+		break;
+#endif
+
 	case K_BACKSPACE:
+	case K_XBUTTON:
 		if (setup_cursor == 0)
 		{
 			if (strlen(setup_hostname))
@@ -974,8 +993,9 @@ again:
 enum
 {
 	OPT_CUSTOMIZE = 0,
-	OPT_CONSOLE,	// 1
-	OPT_DEFAULTS,	// 2
+	OPT_JOYSTICK,	// 1
+	OPT_CONSOLE,	// 2
+	OPT_DEFAULTS,	// 3
 	OPT_SCALE,
 	OPT_SCRSIZE,
 	OPT_GAMMA,
@@ -990,6 +1010,9 @@ enum
 	OPT_ALWAYSMLOOK,
 	OPT_LOOKSPRING,
 	OPT_LOOKSTRAFE,
+#ifdef __SWITCH__
+	OPT_MODS,
+#endif
 //#ifdef _WIN32
 //	OPT_USEMOUSE,
 //#endif
@@ -1194,6 +1217,8 @@ void M_Options_Draw (void)
 	// Draw the items in the order of the enum defined above:
 	// OPT_CUSTOMIZE:
 	M_Print (16, 32,			"              Controls");
+	// OPT_JOYSTICK:
+	M_Print (16, 32 + 8*OPT_JOYSTICK,	"      Joystick options");
 	// OPT_CONSOLE:
 	M_Print (16, 32 + 8*OPT_CONSOLE,	"          Goto console");
 	// OPT_DEFAULTS:
@@ -1219,7 +1244,7 @@ void M_Options_Draw (void)
 	M_Print (16, 32 + 8*OPT_CONTRAST,	"              Contrast");
 	r = vid_contrast.value - 1.0;
 	M_DrawSlider (220, 32 + 8*OPT_CONTRAST, r);
-	
+
 	// OPT_MOUSESPEED:
 	M_Print (16, 32 + 8*OPT_MOUSESPEED,	"           Mouse Speed");
 	r = (sensitivity.value - 1)/10;
@@ -1269,26 +1294,14 @@ void M_Options_Draw (void)
 	M_Print (16, 32 + 8*OPT_LOOKSTRAFE,	"            Lookstrafe");
 	M_DrawCheckbox (220, 32 + 8*OPT_LOOKSTRAFE, lookstrafe.value);
 
+#ifdef __SWITCH__
+	// OPT_MODS
+	M_Print (16, 32 + 8*OPT_MODS,	"            Select Mod");
+#endif
+
 	// OPT_VIDEO:
 	if (vid_menudrawfn)
-#ifdef __SWITCH__
-// draw menu option related to switch
-		M_Print (16, 32 + 8*OPT_VIDEO,	  "          Toggle 1080p");
-
-		M_Print (16, 32 + 8*OPT_GYRO_AIM, "           Gyro aiming");
-		M_DrawCheckbox (220, 32 + 8*OPT_GYRO_AIM, gyro_aiming.value);
-
-		M_Print (16, 32 + 8*OPT_GYRO_HOR, " Gyro horizontal sens.");
-		r = gyro_sens_z.value / 10.0;
-		M_DrawSlider (220, 32 + 8*OPT_GYRO_HOR, r);
-
-		M_Print (16, 32 + 8*OPT_GYRO_VER, "   Gyro vertical sens.");
-		r = gyro_sens_x.value / 10.0;
-		M_DrawSlider (220, 32 + 8*OPT_GYRO_VER, r);
-
-#else
 		M_Print (16, 32 + 8*OPT_VIDEO,	"         Video Options");
-#endif
 
 // cursor
 	M_DrawCharacter (200, 32 + options_cursor*8, 12+((int)(realtime*4)&1));
@@ -1313,6 +1326,9 @@ void M_Options_Key (int k)
 		case OPT_CUSTOMIZE:
 			M_Menu_Keys_f ();
 			break;
+		case OPT_JOYSTICK:
+			M_Menu_Joy_f ();
+			break;
 		case OPT_CONSOLE:
 			m_state = m_none;
 			Con_ToggleConsole_f ();
@@ -1325,15 +1341,13 @@ void M_Options_Key (int k)
 				Cbuf_AddText ("exec default.cfg\n");
 			}
 			break;
-		case OPT_VIDEO:
 #ifdef __SWITCH__
-			Cbuf_AddText ("vid_restart\n");
-			key_dest = key_game;
-			m_state = m_none;
-			IN_Activate();
-#else
-			M_Menu_Video_f ();
+		case OPT_MODS:
+			M_Menu_Mods_f ();
+			break;
 #endif
+		case OPT_VIDEO:
+			M_Menu_Video_f ();
 			break;
 
 #ifdef __SWITCH__
@@ -1576,9 +1590,182 @@ void M_Keys_Key (int k)
 		break;
 
 	case K_BACKSPACE:	// delete bindings
+	case K_XBUTTON:
 	case K_DEL:
 		S_LocalSound ("misc/menu2.wav");
 		M_UnbindCommand (bindnames[keys_cursor][0]);
+		break;
+	}
+}
+
+//=============================================================================
+/* JOYSTICK MENU */
+
+enum
+{
+	OPT_JOY_ENABLE = 0,
+	OPT_JOY_YAW,
+	OPT_JOY_PITCH,
+#ifdef __SWITCH__
+	OPT_JOY_GYRO_HOR,
+	OPT_JOY_GYRO_VER,
+	OPT_JOY_GYRO_ON,
+	OPT_JOY_GYRO_INV,
+#endif
+	OPT_JOY_INVERT,
+
+	JOYSTICK_ITEMS
+};
+
+int joystick_cursor = 0;
+
+void M_Joy_AdjustSliders (int dir)
+{
+	float	f;
+
+	S_LocalSound ("misc/menu3.wav");
+
+	switch (joystick_cursor)
+	{
+	case OPT_JOY_ENABLE:	// enable joysticks
+#ifndef __SWITCH__	// don't let people kill the joystick
+		Cvar_Set ("joy_enable", joy_enable.value ? "0" : "1");
+#endif
+		break;
+	case OPT_JOY_INVERT:	// invert joystick pitch
+		Cvar_Set ("joy_invert", joy_invert.value ? "0" : "1");
+		break;
+	case OPT_JOY_YAW:	// joystick hor speed
+		f = joy_sensitivity_yaw.value + dir * 25.0;
+		if (f > 1000)	f = 1000;
+		else if (f < 25)	f = 25;
+		Cvar_SetValue ("joy_sensitivity_yaw", f);
+		break;
+		break;
+	case OPT_JOY_PITCH:	// joystick ver speed
+		f = joy_sensitivity_pitch.value + dir * 25.0;
+		if (f > 1000)	f = 1000;
+		else if (f < 25)	f = 25;
+		Cvar_SetValue ("joy_sensitivity_pitch", f);
+		break;
+#ifdef __SWITCH__
+	case OPT_JOY_GYRO_ON:	// gyro aiming
+		Cvar_Set ("gyro_enable", gyro_enable.value ? "0" : "1");
+		break;
+	case OPT_JOY_GYRO_INV:	// invert gyro aiming
+		Cvar_Set ("gyro_invert", gyro_invert.value ? "0" : "1");
+		break;
+	case OPT_JOY_GYRO_HOR:	// horz gyro speed
+		f = gyro_sens_z.value + dir * 0.1;
+		if (f < 0.10) f = 0.10;
+		else if (f > 10.0) f = 10.0;
+		Cvar_SetValue ("gyro_sensitivity_z", f);
+		break;
+	case OPT_JOY_GYRO_VER:	// vert gyro speed
+		f = gyro_sens_x.value + dir * 0.1;
+		if (f < 0.10) f = 0.10;
+		else if (f > 10.0) f = 10.0;
+		Cvar_SetValue ("gyro_sensitivity_x", f);
+		break;
+#endif
+	}
+}
+
+void M_Menu_Joy_f (void)
+{
+	IN_Deactivate(modestate == MS_WINDOWED);
+	key_dest = key_menu;
+	m_state = m_joystick;
+	m_entersound = true;
+}
+
+void M_Joy_Draw (void)
+{
+	float		r;
+	qpic_t	*p;
+
+	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
+	p = Draw_CachePic ("gfx/p_option.lmp");
+	M_DrawPic ( (320-p->width)/2, 4, p);
+
+	M_PrintWhite (160-8*8, 32, "Joystick Options");
+
+	// Draw the items in the order of the enum defined above:
+	// OPT_JOY_ENABLE:
+	M_Print (16, 48 + 8*OPT_JOY_ENABLE,	"       Enable Joystick");
+	M_DrawCheckbox (220, 48 + 8*OPT_JOY_ENABLE, joy_enable.value);
+
+	// OPT_JOY_YAW:
+	M_Print (16, 48 + 8*OPT_JOY_YAW,		"      Joystick X Speed");
+	r = (joy_sensitivity_yaw.value - 25)/1000;
+	M_DrawSlider (220, 48 + 8*OPT_JOY_YAW, r);
+
+	// OPT_JOY_PITCH:
+	M_Print (16, 48 + 8*OPT_JOY_PITCH,	"      Joystick Y Speed");
+	r = (joy_sensitivity_pitch.value - 25)/1000;
+	M_DrawSlider (220, 48 + 8*OPT_JOY_PITCH, r);
+
+#ifdef __SWITCH__
+	// OPT_JOY_GYRO_ON:
+	M_Print (16, 48 + 8*OPT_JOY_GYRO_ON,	"           Gyro Aiming");
+	M_DrawCheckbox (220, 48 + 8*OPT_JOY_GYRO_ON, gyro_enable.value);
+
+	// OPT_JOY_GYRO_INV:
+	M_Print (16, 48 + 8*OPT_JOY_GYRO_INV,	"           Invert Gyro");
+	M_DrawCheckbox (220, 48 + 8*OPT_JOY_GYRO_INV, gyro_invert.value);
+
+	// OPT_JOY_GYRO_HOR:
+	M_Print (16, 48 + 8*OPT_JOY_GYRO_HOR,	"          Gyro X Speed");
+	r = gyro_sens_z.value / 10.0;
+	M_DrawSlider (220, 48 + 8*OPT_JOY_GYRO_HOR, r);
+
+	// OPT_JOY_GYRO_VER:
+	M_Print (16, 48 + 8*OPT_JOY_GYRO_VER,	"          Gyro Y Speed");
+	r = gyro_sens_x.value / 10.0;
+	M_DrawSlider (220, 48 + 8*OPT_JOY_GYRO_VER, r);
+#endif
+
+	// OPT_JOY_INVERT:
+	M_Print (16, 48 + 8*OPT_JOY_INVERT,	"       Invert Joystick");
+	M_DrawCheckbox (220, 48 + 8*OPT_JOY_INVERT, joy_invert.value);
+
+// cursor
+	M_DrawCharacter (200, 48 + joystick_cursor*8, 12+((int)(realtime*4)&1));
+}
+
+
+void M_Joy_Key (int k)
+{
+	switch (k)
+	{
+	case K_ESCAPE:
+	case K_BBUTTON:
+		M_Menu_Options_f ();
+		break;
+
+	case K_UPARROW:
+		S_LocalSound ("misc/menu1.wav");
+		joystick_cursor--;
+		if (joystick_cursor < 0)
+			joystick_cursor = JOYSTICK_ITEMS-1;
+		break;
+
+	case K_DOWNARROW:
+		S_LocalSound ("misc/menu1.wav");
+		joystick_cursor++;
+		if (joystick_cursor >= JOYSTICK_ITEMS)
+			joystick_cursor = 0;
+		break;
+
+	case K_LEFTARROW:
+		M_Joy_AdjustSliders (-1);
+		break;
+
+	case K_ENTER:
+	case K_KP_ENTER:
+	case K_ABUTTON:
+	case K_RIGHTARROW:
+		M_Joy_AdjustSliders (1);
 		break;
 	}
 }
@@ -1914,6 +2101,16 @@ void M_LanConfig_Key (int key)
 
 		break;
 
+#ifdef __SWITCH__
+	case K_YBUTTON:
+		if (lanConfig_cursor == 2)
+			IN_SwitchKeyboard(lanConfig_joinname, 22);
+		else if (lanConfig_cursor == 0)
+			IN_SwitchKeyboard(lanConfig_portname, 6);
+		break;
+#endif
+
+	case K_XBUTTON:
 	case K_BACKSPACE:
 		if (lanConfig_cursor == 0)
 		{
@@ -2545,6 +2742,7 @@ void M_ServerList_Key (int k)
 		break;
 
 	case K_SPACE:
+	case K_YBUTTON:
 		M_Menu_Search_f ();
 		break;
 
@@ -2582,6 +2780,108 @@ void M_ServerList_Key (int k)
 	}
 
 }
+
+#ifdef __SWITCH__
+//=============================================================================
+/* Mod selector menu, see Modlist_* in host_cmd.c */
+
+static filelist_item_t *mod_selected = NULL;
+
+static void ChangeGame (char *mod)
+{
+	// remember the mod we're running so it runs again on startup
+	FILE *f = fopen("launch.rc", "w");
+	if (f)
+	{
+		fprintf(f, "%s", mod);
+		fclose(f);
+	}
+	// change game
+	Cbuf_AddText( va ("game %s\n", mod) );
+}
+
+void M_Mods_Key (int k)
+{
+	filelist_item_t *mod, *target;
+
+	switch (k)
+	{
+	case K_ESCAPE:
+	case K_BBUTTON:
+		M_Menu_Options_f ();
+		break;
+
+	case K_DOWNARROW:
+	case K_RIGHTARROW:
+		S_LocalSound ("misc/menu1.wav");
+		if (mod_selected && mod_selected->next)
+			mod_selected = mod_selected->next;
+		else
+			mod_selected = modlist;
+		break;
+
+	case K_UPARROW:
+	case K_LEFTARROW:
+		S_LocalSound ("misc/menu1.wav");
+		if (mod_selected)
+		{
+			target = mod_selected == modlist ? NULL : mod_selected;
+			for (mod = modlist; mod && mod->next != target; mod = mod->next);
+			mod_selected = mod;
+		}
+		break;
+
+	case K_ENTER:
+	case K_KP_ENTER:
+	case K_ABUTTON:
+		if (mod_selected)
+		{
+			S_LocalSound ("misc/menu2.wav");
+			IN_Activate();
+			key_dest = key_game;
+			m_state = m_none;
+			ChangeGame (mod_selected->name);
+		}
+		break;
+
+	default:
+		break;
+	}
+}
+
+void M_Mods_Draw (void)
+{
+	int	n, i = 0;
+	char *tmp;
+	filelist_item_t	*mod;
+
+	M_PrintWhite (160 - 13*8, 0, "Detected game directories:");
+	for (mod = modlist, n=0; mod; mod = mod->next, n++)
+	{
+		M_Print (160 - 13*8, 16 + 8*n, mod->name);
+		if (mod == mod_selected) i = n;
+	}
+
+	if (n)
+		M_DrawCharacter (160 - 15*8, 16 + i*8, 12+((int)(realtime*4)&1));
+	else
+		M_Print (160 - 13*8, 16, "No mods in current directory.");
+
+	tmp = va("Current game directory: %s", com_gamedir);
+	M_PrintWhite (160 - strlen(tmp)*4, 200 - 32, tmp);
+	M_PrintWhite (160 - 13*8, 200 - 16, "Select new game directory");
+	M_PrintWhite (160 - 13*8, 200 -  8, " and press A to restart.");
+}
+
+void M_Menu_Mods_f (void)
+{
+	IN_Deactivate(modestate == MS_WINDOWED);
+	key_dest = key_menu;
+	m_state = m_mods;
+	m_entersound = true;
+	mod_selected = modlist;
+}
+#endif
 
 //=============================================================================
 /* Menu Subsystem */
@@ -2668,6 +2968,10 @@ void M_Draw (void)
 		M_Keys_Draw ();
 		break;
 
+	case m_joystick:
+		M_Joy_Draw ();
+		break;
+
 	case m_video:
 		M_Video_Draw ();
 		break;
@@ -2701,6 +3005,12 @@ void M_Draw (void)
 	case m_slist:
 		M_ServerList_Draw ();
 		break;
+#ifdef __SWITCH__
+
+	case m_mods:
+		M_Mods_Draw ();
+		break;
+#endif
 	}
 
 	if (m_entersound)
@@ -2756,6 +3066,10 @@ void M_Keydown (int key)
 		M_Keys_Key (key);
 		return;
 
+	case m_joystick:
+		M_Joy_Key (key);
+		return;
+
 	case m_video:
 		M_Video_Key (key);
 		return;
@@ -2783,6 +3097,13 @@ void M_Keydown (int key)
 	case m_slist:
 		M_ServerList_Key (key);
 		return;
+
+#ifdef __SWITCH__
+
+	case m_mods:
+		M_Mods_Key (key);
+		break;
+#endif
 	}
 }
 

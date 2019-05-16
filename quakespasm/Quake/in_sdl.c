@@ -32,7 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "SDL.h"
 #endif
 
-// Some quick hacking 
+// for sixaxis stuff
 #ifdef __SWITCH__
 #include <switch.h>
 #endif
@@ -65,10 +65,10 @@ cvar_t	joy_swapmovelook = { "joy_swapmovelook", "0", CVAR_ARCHIVE };
 cvar_t	joy_enable = { "joy_enable", "1", CVAR_ARCHIVE };
 
 #ifdef __SWITCH__
-// Trying to save gyro sensitivity as cvar
-cvar_t gyro_aiming = { "gyro_aiming", "1.0", CVAR_ARCHIVE };
-cvar_t gyro_sens_x = { "gyro_sens_x", "4.0", CVAR_ARCHIVE };
-cvar_t gyro_sens_z = { "gyro_sens_z", "2.0", CVAR_ARCHIVE };
+cvar_t	gyro_enable = { "gyro_enable", "0", CVAR_ARCHIVE };
+cvar_t	gyro_invert = { "gyro_invert", "0", CVAR_ARCHIVE };
+cvar_t	gyro_sens_x = { "gyro_sensitivity_x", "3.0", CVAR_ARCHIVE };
+cvar_t	gyro_sens_z = { "gyro_sensitivity_z", "3.0", CVAR_ARCHIVE };
 #endif // __SWITCH__
 
 #if defined(USE_SDL2)
@@ -211,6 +211,32 @@ static void IN_ReenableOSXMouseAccel (void)
 }
 #endif /* MACOS_X_ACCELERATION_HACK */
 
+#ifdef __SWITCH__
+// sixaxis sensors for gyro aiming
+
+static unsigned int sixaxis_handles[3] = { 0, 0, 0 };
+
+static void IN_StartupSixaxis (void) 
+{
+	hidGetSixAxisSensorHandles(&sixaxis_handles[0], 2, CONTROLLER_PLAYER_1, TYPE_JOYCON_PAIR);
+	hidGetSixAxisSensorHandles(&sixaxis_handles[2], 1, CONTROLLER_PLAYER_1, TYPE_PROCONTROLLER);
+	hidStartSixAxisSensor(sixaxis_handles[0]);
+	hidStartSixAxisSensor(sixaxis_handles[1]);
+	hidStartSixAxisSensor(sixaxis_handles[2]);
+
+	Cvar_RegisterVariable(&gyro_enable);
+	Cvar_RegisterVariable(&gyro_invert);
+	Cvar_RegisterVariable(&gyro_sens_x);
+	Cvar_RegisterVariable(&gyro_sens_z);
+}
+
+static void IN_ShutdownSixaxis (void) 
+{
+	hidStopSixAxisSensor(sixaxis_handles[0]);
+	hidStopSixAxisSensor(sixaxis_handles[1]);
+	hidStopSixAxisSensor(sixaxis_handles[2]);
+}
+#endif
 
 void IN_Activate (void)
 {
@@ -396,11 +422,17 @@ void IN_Init (void)
 
 	IN_Activate();
 	IN_StartupJoystick();
+#ifdef __SWITCH__
+	IN_StartupSixaxis();
+#endif
 }
 
 void IN_Shutdown (void)
 {
 	IN_Deactivate(true);
+#ifdef __SWITCH__
+	IN_ShutdownSixaxis();
+#endif
 	IN_ShutdownJoystick();
 }
 
@@ -703,20 +735,6 @@ void IN_JoyMove (usercmd_t *cmd)
 
 	moveEased = IN_ApplyMoveEasing(moveDeadzone, joy_exponent_move.value);
 	lookEased = IN_ApplyEasing(lookDeadzone, joy_exponent.value);
-	
-#ifdef __SWITCH__
-	// Hack switch gyro aim here
-	if ( gyro_aiming.value ) {
-		hidScanInput();
-		SixAxisSensorValues sixaxis;
-		hidSixAxisSensorValuesRead(&sixaxis, CONTROLLER_P1_AUTO, 1);
-
-		// Horizontal look controlled by gyro axis Z
-		lookEased.x -= (gyro_sens_z.value * sixaxis.gyroscope.z);
-		// Vertical look controlled by gyro axis X
-		lookEased.y -= (gyro_sens_x.value * sixaxis.gyroscope.x);
-	}
-#endif // __SWITCH__
 
 	if ((in_speed.state & 1) ^ (cl_alwaysrun.value != 0.0))
 		speed = cl_movespeedkey.value;
@@ -728,6 +746,26 @@ void IN_JoyMove (usercmd_t *cmd)
 
 	cl.viewangles[YAW] -= lookEased.x * joy_sensitivity_yaw.value * host_frametime;
 	cl.viewangles[PITCH] += lookEased.y * joy_sensitivity_pitch.value * (joy_invert.value ? -1.0 : 1.0) * host_frametime;
+
+#ifdef __SWITCH__
+	if (gyro_enable.value)
+	{
+		// Gyro aiming
+		hidScanInput();
+		SixAxisSensorValues sixaxis = { 0 };
+		hidSixAxisSensorValuesRead(&sixaxis, CONTROLLER_P1_AUTO, 1);
+		if (sixaxis.gyroscope.z || sixaxis.gyroscope.x)
+		{
+			// Needed for StopPitchDrift below
+			lookEased.x = sixaxis.gyroscope.z;
+			lookEased.y = sixaxis.gyroscope.x;
+			// Horizontal look controlled by gyro axis Z
+			cl.viewangles[YAW] += lookEased.x * 100.0 * gyro_sens_z.value * host_frametime;
+			// Vertical look controlled by gyro axis X
+			cl.viewangles[PITCH] -= lookEased.y * 100.0 * (gyro_invert.value ? -1.0 : 1.0) * gyro_sens_x.value * host_frametime;
+		}
+	}
+#endif // __SWITCH__
 
 	if (lookEased.x != 0 || lookEased.y != 0)
 		V_StopPitchDrift();
@@ -1180,3 +1218,31 @@ void IN_SendKeyEvents (void)
 	}
 }
 
+#ifdef __SWITCH__
+qboolean IN_SwitchKeyboard(char *out, int out_len)
+{
+	SwkbdConfig kbd;
+	char tmp_out[out_len + 1];
+	Result rc;
+	tmp_out[0] = 0;
+
+	Key_ClearStates();
+
+	rc = swkbdCreate(&kbd, 0);
+	if (R_SUCCEEDED(rc))
+	{
+		swkbdConfigMakePresetDefault(&kbd);
+		swkbdConfigSetInitialText(&kbd, out);
+		rc = swkbdShow(&kbd, tmp_out, out_len);
+		if (R_SUCCEEDED(rc))
+			strncpy(out, tmp_out, out_len); 
+		swkbdClose(&kbd);
+	}
+
+	// gotta do this or events get stuck
+	SDL_PumpEvents();
+	SDL_FlushEvents(SDL_KEYDOWN, SDL_CONTROLLERBUTTONUP);
+
+	return R_SUCCEEDED(rc);
+}
+#endif

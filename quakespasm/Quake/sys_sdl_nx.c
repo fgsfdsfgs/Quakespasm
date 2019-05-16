@@ -154,7 +154,7 @@ static void Sys_GetBasedir (char *argv0, char *dst, size_t dstsize)
 {
 	char	*tmp;
 
-	strncpy(dst, "/switch/quakespasm/", dstsize);
+	strncpy(dst, ".", dstsize);
 
 	tmp = dst;
 	while (*tmp != 0)
@@ -196,9 +196,6 @@ void Sys_Init (void)
 	host_parms->numcpus = Sys_NumCPUs ();
 	Sys_Printf("Detected %d CPUs.\n", host_parms->numcpus);
 
-	// Ok lets go. Initializing nx sixaxis sensor
-	Sys_Init_Sixaxis_Nx();
-
 	appletLockExit ();
 }
 
@@ -233,7 +230,7 @@ void Sys_Error (const char *error, ...)
 	q_vsnprintf (text, sizeof(text), error, argptr);
 	va_end (argptr);
 
-	f = fopen ("/switch/quakespasm/error.log", "w");
+	f = fopen ("./error.log", "w");
 	if (f)
 	{
 		fprintf (f, "Error: %s\n", text);

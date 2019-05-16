@@ -264,6 +264,17 @@ extern	cvar_t	m_yaw;
 extern	cvar_t	m_forward;
 extern	cvar_t	m_side;
 
+extern	cvar_t	joy_sensitivity_yaw;
+extern	cvar_t	joy_sensitivity_pitch;
+extern	cvar_t	joy_invert;
+extern	cvar_t	joy_enable;
+
+#ifdef __SWITCH__
+extern	cvar_t	gyro_enable;
+extern	cvar_t	gyro_invert;
+extern	cvar_t	gyro_sens_x;
+extern	cvar_t	gyro_sens_z;
+#endif
 
 #define	MAX_TEMP_ENTITIES	256		//johnfitz -- was 64
 #define	MAX_STATIC_ENTITIES	4096	//ericw -- was 512	//johnfitz -- was 128

@@ -35,12 +35,16 @@ enum m_state_e {
 	m_options,
 	m_video,
 	m_keys,
+	m_joystick,
 	m_help,
 	m_quit,
 	m_lanconfig,
 	m_gameoptions,
 	m_search,
-	m_slist
+	m_slist,
+#ifdef __SWITCH__
+	m_mods,
+#endif
 };
 
 extern enum m_state_e m_state;

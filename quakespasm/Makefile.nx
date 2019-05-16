@@ -32,7 +32,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 #---------------------------------------------------------------------------------
 APP_TITLE	:=	QuakespasmNX
 APP_AUTHOR	:=	fgsfds
-APP_VERSION	:=	0.1.0
+APP_VERSION	:=	0.2.0
 
 TARGET		:=	quakespasmnx
 BUILD		:=	build
@@ -64,7 +64,7 @@ SOURCEFILES	:=\
 	Quake/gl_screen.c \
 	Quake/gl_sky.c \
 	Quake/gl_warp.c \
-	Quake/gl_videgl.c \
+	Quake/gl_vidsdl.c \
 	Quake/gl_draw.c \
 	Quake/image.c \
 	Quake/gl_texmgr.c \
