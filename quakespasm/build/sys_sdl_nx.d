@@ -100,12 +100,15 @@ sys_sdl_nx.o: \
  /opt/devkitpro/libnx/include/switch/arm/counter.h \
  /opt/devkitpro/libnx/include/switch/kernel/svc.h \
  /opt/devkitpro/libnx/include/switch/kernel/../arm/thread_context.h \
+ /opt/devkitpro/libnx/include/switch/kernel/wait.h \
+ /opt/devkitpro/libnx/include/switch/kernel/mutex.h \
  /opt/devkitpro/libnx/include/switch/kernel/tmem.h \
  /opt/devkitpro/libnx/include/switch/kernel/shmem.h \
- /opt/devkitpro/libnx/include/switch/kernel/mutex.h \
  /opt/devkitpro/libnx/include/switch/kernel/event.h \
+ /opt/devkitpro/libnx/include/switch/kernel/uevent.h \
+ /opt/devkitpro/libnx/include/switch/kernel/utimer.h \
  /opt/devkitpro/libnx/include/switch/kernel/rwlock.h \
- /opt/devkitpro/libnx/include/switch/kernel/condvar.h \
+ /opt/devkitpro/libnx/include/switch/kernel/../kernel/condvar.h \
  /opt/devkitpro/libnx/include/switch/kernel/thread.h \
  /opt/devkitpro/libnx/include/switch/kernel/semaphore.h \
  /opt/devkitpro/libnx/include/switch/kernel/virtmem.h \
@@ -134,12 +137,16 @@ sys_sdl_nx.o: \
  /opt/devkitpro/libnx/include/switch/services/gpio.h \
  /opt/devkitpro/libnx/include/switch/services/bpc.h \
  /opt/devkitpro/libnx/include/switch/services/pcv.h \
+ /opt/devkitpro/libnx/include/switch/services/clkrst.h \
  /opt/devkitpro/libnx/include/switch/services/psm.h \
  /opt/devkitpro/libnx/include/switch/services/spsm.h \
  /opt/devkitpro/libnx/include/switch/services/fatal.h \
  /opt/devkitpro/libnx/include/switch/services/time.h \
  /opt/devkitpro/libnx/include/switch/services/usb.h \
+ /opt/devkitpro/libnx/include/switch/services/usbds.h \
+ /opt/devkitpro/libnx/include/switch/services/usbhs.h \
  /opt/devkitpro/libnx/include/switch/services/hid.h \
+ /opt/devkitpro/libnx/include/switch/services/hidsys.h \
  /opt/devkitpro/libnx/include/switch/services/irs.h \
  /opt/devkitpro/libnx/include/switch/services/pl.h \
  /opt/devkitpro/libnx/include/switch/services/vi.h \
@@ -147,40 +154,58 @@ sys_sdl_nx.o: \
  /opt/devkitpro/libnx/include/switch/services/nifm.h \
  /opt/devkitpro/libnx/include/switch/services/ns.h \
  /opt/devkitpro/libnx/include/switch/services/ldr.h \
+ /opt/devkitpro/libnx/include/switch/services/ro.h \
  /opt/devkitpro/libnx/include/switch/services/pm.h \
  /opt/devkitpro/libnx/include/switch/services/set.h \
  /opt/devkitpro/libnx/include/switch/services/lr.h \
  /opt/devkitpro/libnx/include/switch/services/spl.h \
  /opt/devkitpro/libnx/include/switch/services/ncm.h \
  /opt/devkitpro/libnx/include/switch/services/psc.h \
- /opt/devkitpro/libnx/include/switch/display/gfx.h \
- /opt/devkitpro/libnx/include/switch/display/../nvidia/fence.h \
- /opt/devkitpro/libnx/include/switch/display/../nvidia/ioctl.h \
- /opt/devkitpro/libnx/include/switch/display/../nvidia/types.h \
+ /opt/devkitpro/libnx/include/switch/services/caps.h \
+ /opt/devkitpro/libnx/include/switch/services/capssc.h \
+ /opt/devkitpro/libnx/include/switch/services/capssu.h \
+ /opt/devkitpro/libnx/include/switch/services/nfc.h \
+ /opt/devkitpro/libnx/include/switch/services/wlaninf.h \
+ /opt/devkitpro/libnx/include/switch/services/pctl.h \
  /opt/devkitpro/libnx/include/switch/display/binder.h \
  /opt/devkitpro/libnx/include/switch/display/parcel.h \
  /opt/devkitpro/libnx/include/switch/display/buffer_producer.h \
  /opt/devkitpro/libnx/include/switch/display/types.h \
- /opt/devkitpro/libnx/include/switch/display/nvgfx.h \
- /opt/devkitpro/libnx/include/switch/nvidia/buffer.h \
+ /opt/devkitpro/libnx/include/switch/display/../nvidia/fence.h \
+ /opt/devkitpro/libnx/include/switch/display/../nvidia/ioctl.h \
+ /opt/devkitpro/libnx/include/switch/display/../nvidia/types.h \
+ /opt/devkitpro/libnx/include/switch/display/native_window.h \
+ /opt/devkitpro/libnx/include/switch/display/../nvidia/graphic_buffer.h \
+ /opt/devkitpro/libnx/include/switch/display/framebuffer.h \
+ /opt/devkitpro/libnx/include/switch/display/../nvidia/map.h \
  /opt/devkitpro/libnx/include/switch/nvidia/address_space.h \
  /opt/devkitpro/libnx/include/switch/nvidia/channel.h \
- /opt/devkitpro/libnx/include/switch/nvidia/info.h \
- /opt/devkitpro/libnx/include/switch/nvidia/gpu/cmd_list.h \
- /opt/devkitpro/libnx/include/switch/nvidia/gpu/gpfifo.h \
- /opt/devkitpro/libnx/include/switch/nvidia/gpu/zcull_ctx.h \
- /opt/devkitpro/libnx/include/switch/nvidia/gpu/3d_ctx.h \
- /opt/devkitpro/libnx/include/switch/nvidia/gpu/error_notifier.h \
- /opt/devkitpro/libnx/include/switch/nvidia/gpu/gpu.h \
+ /opt/devkitpro/libnx/include/switch/nvidia/gpu.h \
+ /opt/devkitpro/libnx/include/switch/nvidia/gpu_channel.h \
  /opt/devkitpro/libnx/include/switch/audio/driver.h \
+ /opt/devkitpro/libnx/include/switch/applets/libapplet.h \
+ /opt/devkitpro/libnx/include/switch/applets/pctlauth.h \
+ /opt/devkitpro/libnx/include/switch/applets/error.h \
+ /opt/devkitpro/libnx/include/switch/applets/swkbd.h \
+ /opt/devkitpro/libnx/include/switch/applets/web.h \
  /opt/devkitpro/libnx/include/switch/runtime/env.h \
+ /opt/devkitpro/libnx/include/switch/runtime/hosversion.h \
  /opt/devkitpro/libnx/include/switch/runtime/nxlink.h \
  /opt/devkitpro/libnx/include/switch/runtime/util/utf.h \
  /opt/devkitpro/libnx/include/switch/runtime/devices/console.h \
  /opt/devkitpro/libnx/include/switch/runtime/devices/usb_comms.h \
  /opt/devkitpro/libnx/include/switch/runtime/devices/fs_dev.h \
  /opt/devkitpro/libnx/include/switch/runtime/devices/romfs_dev.h \
- /opt/devkitpro/libnx/include/switch/runtime/devices/socket.h
+ /opt/devkitpro/libnx/include/switch/runtime/devices/socket.h \
+ /opt/devkitpro/libnx/include/switch/crypto/aes.h \
+ /opt/devkitpro/libnx/include/switch/crypto/aes_cbc.h \
+ /opt/devkitpro/libnx/include/switch/crypto/aes_ctr.h \
+ /opt/devkitpro/libnx/include/switch/crypto/aes_xts.h \
+ /opt/devkitpro/libnx/include/switch/crypto/cmac.h \
+ /opt/devkitpro/libnx/include/switch/crypto/sha256.h \
+ /opt/devkitpro/libnx/include/switch/crypto/sha1.h \
+ /opt/devkitpro/libnx/include/switch/crypto/hmac.h \
+ /opt/devkitpro/libnx/include/switch/crypto/crc.h
 
 /home/falquinho/Workspaces/libnx/QuakespasmNX/quakespasm/Quake/arch_def.h:
 
@@ -382,17 +407,23 @@ sys_sdl_nx.o: \
 
 /opt/devkitpro/libnx/include/switch/kernel/../arm/thread_context.h:
 
+/opt/devkitpro/libnx/include/switch/kernel/wait.h:
+
+/opt/devkitpro/libnx/include/switch/kernel/mutex.h:
+
 /opt/devkitpro/libnx/include/switch/kernel/tmem.h:
 
 /opt/devkitpro/libnx/include/switch/kernel/shmem.h:
 
-/opt/devkitpro/libnx/include/switch/kernel/mutex.h:
-
 /opt/devkitpro/libnx/include/switch/kernel/event.h:
+
+/opt/devkitpro/libnx/include/switch/kernel/uevent.h:
+
+/opt/devkitpro/libnx/include/switch/kernel/utimer.h:
 
 /opt/devkitpro/libnx/include/switch/kernel/rwlock.h:
 
-/opt/devkitpro/libnx/include/switch/kernel/condvar.h:
+/opt/devkitpro/libnx/include/switch/kernel/../kernel/condvar.h:
 
 /opt/devkitpro/libnx/include/switch/kernel/thread.h:
 
@@ -450,6 +481,8 @@ sys_sdl_nx.o: \
 
 /opt/devkitpro/libnx/include/switch/services/pcv.h:
 
+/opt/devkitpro/libnx/include/switch/services/clkrst.h:
+
 /opt/devkitpro/libnx/include/switch/services/psm.h:
 
 /opt/devkitpro/libnx/include/switch/services/spsm.h:
@@ -460,7 +493,13 @@ sys_sdl_nx.o: \
 
 /opt/devkitpro/libnx/include/switch/services/usb.h:
 
+/opt/devkitpro/libnx/include/switch/services/usbds.h:
+
+/opt/devkitpro/libnx/include/switch/services/usbhs.h:
+
 /opt/devkitpro/libnx/include/switch/services/hid.h:
+
+/opt/devkitpro/libnx/include/switch/services/hidsys.h:
 
 /opt/devkitpro/libnx/include/switch/services/irs.h:
 
@@ -476,6 +515,8 @@ sys_sdl_nx.o: \
 
 /opt/devkitpro/libnx/include/switch/services/ldr.h:
 
+/opt/devkitpro/libnx/include/switch/services/ro.h:
+
 /opt/devkitpro/libnx/include/switch/services/pm.h:
 
 /opt/devkitpro/libnx/include/switch/services/set.h:
@@ -488,13 +529,17 @@ sys_sdl_nx.o: \
 
 /opt/devkitpro/libnx/include/switch/services/psc.h:
 
-/opt/devkitpro/libnx/include/switch/display/gfx.h:
+/opt/devkitpro/libnx/include/switch/services/caps.h:
 
-/opt/devkitpro/libnx/include/switch/display/../nvidia/fence.h:
+/opt/devkitpro/libnx/include/switch/services/capssc.h:
 
-/opt/devkitpro/libnx/include/switch/display/../nvidia/ioctl.h:
+/opt/devkitpro/libnx/include/switch/services/capssu.h:
 
-/opt/devkitpro/libnx/include/switch/display/../nvidia/types.h:
+/opt/devkitpro/libnx/include/switch/services/nfc.h:
+
+/opt/devkitpro/libnx/include/switch/services/wlaninf.h:
+
+/opt/devkitpro/libnx/include/switch/services/pctl.h:
 
 /opt/devkitpro/libnx/include/switch/display/binder.h:
 
@@ -504,31 +549,43 @@ sys_sdl_nx.o: \
 
 /opt/devkitpro/libnx/include/switch/display/types.h:
 
-/opt/devkitpro/libnx/include/switch/display/nvgfx.h:
+/opt/devkitpro/libnx/include/switch/display/../nvidia/fence.h:
 
-/opt/devkitpro/libnx/include/switch/nvidia/buffer.h:
+/opt/devkitpro/libnx/include/switch/display/../nvidia/ioctl.h:
+
+/opt/devkitpro/libnx/include/switch/display/../nvidia/types.h:
+
+/opt/devkitpro/libnx/include/switch/display/native_window.h:
+
+/opt/devkitpro/libnx/include/switch/display/../nvidia/graphic_buffer.h:
+
+/opt/devkitpro/libnx/include/switch/display/framebuffer.h:
+
+/opt/devkitpro/libnx/include/switch/display/../nvidia/map.h:
 
 /opt/devkitpro/libnx/include/switch/nvidia/address_space.h:
 
 /opt/devkitpro/libnx/include/switch/nvidia/channel.h:
 
-/opt/devkitpro/libnx/include/switch/nvidia/info.h:
+/opt/devkitpro/libnx/include/switch/nvidia/gpu.h:
 
-/opt/devkitpro/libnx/include/switch/nvidia/gpu/cmd_list.h:
-
-/opt/devkitpro/libnx/include/switch/nvidia/gpu/gpfifo.h:
-
-/opt/devkitpro/libnx/include/switch/nvidia/gpu/zcull_ctx.h:
-
-/opt/devkitpro/libnx/include/switch/nvidia/gpu/3d_ctx.h:
-
-/opt/devkitpro/libnx/include/switch/nvidia/gpu/error_notifier.h:
-
-/opt/devkitpro/libnx/include/switch/nvidia/gpu/gpu.h:
+/opt/devkitpro/libnx/include/switch/nvidia/gpu_channel.h:
 
 /opt/devkitpro/libnx/include/switch/audio/driver.h:
 
+/opt/devkitpro/libnx/include/switch/applets/libapplet.h:
+
+/opt/devkitpro/libnx/include/switch/applets/pctlauth.h:
+
+/opt/devkitpro/libnx/include/switch/applets/error.h:
+
+/opt/devkitpro/libnx/include/switch/applets/swkbd.h:
+
+/opt/devkitpro/libnx/include/switch/applets/web.h:
+
 /opt/devkitpro/libnx/include/switch/runtime/env.h:
+
+/opt/devkitpro/libnx/include/switch/runtime/hosversion.h:
 
 /opt/devkitpro/libnx/include/switch/runtime/nxlink.h:
 
@@ -543,3 +600,21 @@ sys_sdl_nx.o: \
 /opt/devkitpro/libnx/include/switch/runtime/devices/romfs_dev.h:
 
 /opt/devkitpro/libnx/include/switch/runtime/devices/socket.h:
+
+/opt/devkitpro/libnx/include/switch/crypto/aes.h:
+
+/opt/devkitpro/libnx/include/switch/crypto/aes_cbc.h:
+
+/opt/devkitpro/libnx/include/switch/crypto/aes_ctr.h:
+
+/opt/devkitpro/libnx/include/switch/crypto/aes_xts.h:
+
+/opt/devkitpro/libnx/include/switch/crypto/cmac.h:
+
+/opt/devkitpro/libnx/include/switch/crypto/sha256.h:
+
+/opt/devkitpro/libnx/include/switch/crypto/sha1.h:
+
+/opt/devkitpro/libnx/include/switch/crypto/hmac.h:
+
+/opt/devkitpro/libnx/include/switch/crypto/crc.h:

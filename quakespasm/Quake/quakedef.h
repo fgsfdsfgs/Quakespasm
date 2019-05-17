@@ -336,14 +336,5 @@ extern qboolean		isDedicated;
 
 extern int		minimum_memory;
 
-
-// Make sure the var is known by everyone
-#ifdef __SWITCH__
-extern unsigned int sixaxis_handles[3];
-extern cvar_t gyro_sens_x; // gyro x: control vertical look
-extern cvar_t gyro_sens_z; // gyro z: control horizontal look
-extern cvar_t gyro_aiming;
-#endif // __SWITCH__
-
 #endif	/* QUAKEDEFS_H */
 
