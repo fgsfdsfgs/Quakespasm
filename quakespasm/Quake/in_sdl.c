@@ -54,21 +54,23 @@ static cvar_t in_debugkeys = {"in_debugkeys", "0", CVAR_NONE};
 #endif
 
 // SDL2 Game Controller cvars
-cvar_t	joy_deadzone = { "joy_deadzone", "0.175", CVAR_ARCHIVE };
-cvar_t	joy_deadzone_trigger = { "joy_deadzone_trigger", "0.2", CVAR_ARCHIVE };
-cvar_t	joy_sensitivity_yaw = { "joy_sensitivity_yaw", "300", CVAR_ARCHIVE };
-cvar_t	joy_sensitivity_pitch = { "joy_sensitivity_pitch", "150", CVAR_ARCHIVE };
-cvar_t	joy_invert = { "joy_invert", "0", CVAR_ARCHIVE };
-cvar_t	joy_exponent = { "joy_exponent", "3", CVAR_ARCHIVE };
-cvar_t	joy_exponent_move = { "joy_exponent_move", "3", CVAR_ARCHIVE };
-cvar_t	joy_swapmovelook = { "joy_swapmovelook", "0", CVAR_ARCHIVE };
-cvar_t	joy_enable = { "joy_enable", "1", CVAR_ARCHIVE };
+cvar_t	joy_deadzone          = { "joy_deadzone",          "0.175", CVAR_ARCHIVE };
+cvar_t	joy_deadzone_trigger  = { "joy_deadzone_trigger",  "0.2",   CVAR_ARCHIVE };
+cvar_t	joy_sensitivity_yaw   = { "joy_sensitivity_yaw",   "300",   CVAR_ARCHIVE };
+cvar_t	joy_sensitivity_pitch = { "joy_sensitivity_pitch", "150",   CVAR_ARCHIVE };
+cvar_t	joy_invert            = { "joy_invert",            "0",     CVAR_ARCHIVE };
+cvar_t	joy_exponent 		  = { "joy_exponent",          "3",     CVAR_ARCHIVE };
+cvar_t	joy_exponent_move 	  = { "joy_exponent_move",     "3",     CVAR_ARCHIVE };
+cvar_t	joy_swapmovelook 	  = { "joy_swapmovelook",      "0",     CVAR_ARCHIVE };
+cvar_t	joy_enable 			  = { "joy_enable",            "1",     CVAR_ARCHIVE };
 
 #ifdef __SWITCH__
-cvar_t	gyro_enable = { "gyro_enable", "0", CVAR_ARCHIVE };
-cvar_t	gyro_invert = { "gyro_invert", "0", CVAR_ARCHIVE };
-cvar_t	gyro_sens_x = { "gyro_sensitivity_x", "3.0", CVAR_ARCHIVE };
-cvar_t	gyro_sens_z = { "gyro_sensitivity_z", "3.0", CVAR_ARCHIVE };
+cvar_t	gyro_enable   = { "gyro_enable",   "0", CVAR_ARCHIVE };
+cvar_t	gyro_invert   = { "gyro_invert",   "0", CVAR_ARCHIVE };
+cvar_t	gyro_invert_x = { "gyro_invert_x", "0", CVAR_ARCHIVE };
+cvar_t	gyro_axis_hor = { "gyro_axis_hor", "0", CVAR_ARCHIVE };
+cvar_t	gyro_sens_x   = { "gyro_sensitivity_x", "3.0", CVAR_ARCHIVE };
+cvar_t	gyro_sens_z   = { "gyro_sensitivity_z", "3.0", CVAR_ARCHIVE };
 #endif // __SWITCH__
 
 #if defined(USE_SDL2)
@@ -212,20 +214,23 @@ static void IN_ReenableOSXMouseAccel (void)
 #endif /* MACOS_X_ACCELERATION_HACK */
 
 #ifdef __SWITCH__
-// sixaxis sensors for gyro aiming
-
-static unsigned int sixaxis_handles[3] = { 0, 0, 0 };
+// sixaxis sensors for gyro aiming( hoping int is 32bit )
+static unsigned int sixaxis_handles[4] = { 0, 0, 0, 0 };
 
 static void IN_StartupSixaxis (void) 
 {
 	hidGetSixAxisSensorHandles(&sixaxis_handles[0], 2, CONTROLLER_PLAYER_1, TYPE_JOYCON_PAIR);
 	hidGetSixAxisSensorHandles(&sixaxis_handles[2], 1, CONTROLLER_PLAYER_1, TYPE_PROCONTROLLER);
+	hidGetSixAxisSensorHandles(&sixaxis_handles[3], 1, CONTROLLER_HANDHELD, TYPE_HANDHELD);
 	hidStartSixAxisSensor(sixaxis_handles[0]);
 	hidStartSixAxisSensor(sixaxis_handles[1]);
 	hidStartSixAxisSensor(sixaxis_handles[2]);
+	hidStartSixAxisSensor(sixaxis_handles[3]);
 
 	Cvar_RegisterVariable(&gyro_enable);
 	Cvar_RegisterVariable(&gyro_invert);
+	Cvar_RegisterVariable(&gyro_invert_x);
+	Cvar_RegisterVariable(&gyro_axis_hor);
 	Cvar_RegisterVariable(&gyro_sens_x);
 	Cvar_RegisterVariable(&gyro_sens_z);
 }
@@ -235,6 +240,7 @@ static void IN_ShutdownSixaxis (void)
 	hidStopSixAxisSensor(sixaxis_handles[0]);
 	hidStopSixAxisSensor(sixaxis_handles[1]);
 	hidStopSixAxisSensor(sixaxis_handles[2]);
+	hidStopSixAxisSensor(sixaxis_handles[3]);
 }
 #endif
 
@@ -412,7 +418,6 @@ void IN_Init (void)
 	Cvar_RegisterVariable(&joy_exponent_move);
 	Cvar_RegisterVariable(&joy_swapmovelook);
 	Cvar_RegisterVariable(&joy_enable);
-
 	IN_Activate();
 	IN_StartupJoystick();
 #ifdef __SWITCH__
@@ -743,20 +748,16 @@ void IN_JoyMove (usercmd_t *cmd)
 #ifdef __SWITCH__
 	if (gyro_enable.value)
 	{
-		// Gyro aiming
 		hidScanInput();
 		SixAxisSensorValues sixaxis = { 0 };
 		hidSixAxisSensorValuesRead(&sixaxis, CONTROLLER_P1_AUTO, 1);
-		if (sixaxis.gyroscope.z || sixaxis.gyroscope.x)
-		{
-			// Needed for StopPitchDrift below
-			lookEased.x = sixaxis.gyroscope.z;
-			lookEased.y = sixaxis.gyroscope.x;
-			// Horizontal look controlled by gyro axis Z
-			cl.viewangles[YAW] += lookEased.x * 100.0 * gyro_sens_z.value * host_frametime;
-			// Vertical look controlled by gyro axis X
-			cl.viewangles[PITCH] -= lookEased.y * 100.0 * (gyro_invert.value ? -1.0 : 1.0) * gyro_sens_x.value * host_frametime;
-		}
+		// Needed for StopPitchDrift below
+		lookEased.x = gyro_axis_hor.value? sixaxis.gyroscope.z : sixaxis.gyroscope.y;
+		lookEased.y = sixaxis.gyroscope.x;
+		// Horizontal look
+		cl.viewangles[YAW] += lookEased.x * 100.0 * (gyro_invert_x.value ? -1.0 : 1.0) * gyro_sens_z.value * host_frametime;
+		// Vertical look controlled by gyro axis X (Pitch)
+		cl.viewangles[PITCH] -= lookEased.y * 100.0 * (gyro_invert.value ? -1.0 : 1.0) * gyro_sens_x.value * host_frametime;
 	}
 #endif // __SWITCH__
 

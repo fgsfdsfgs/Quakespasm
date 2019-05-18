@@ -1017,6 +1017,12 @@ enum
 //	OPT_USEMOUSE,
 //#endif
 	OPT_VIDEO,	// This is the last before OPTIONS_ITEMS
+#ifdef __SWITCH__
+	OPT_GYRO_AIM, // hacking in menu for gyro aim
+	OPT_GYRO_AIM_MODE,
+	OPT_GYRO_HOR,
+	OPT_GYRO_VER, 
+#endif
 	OPTIONS_ITEMS
 };
 
@@ -1153,6 +1159,20 @@ void M_AdjustSliders (int dir)
 	case OPT_LOOKSTRAFE:	// lookstrafe
 		Cvar_Set ("lookstrafe", lookstrafe.value ? "0" : "1");
 		break;
+#ifdef __SWITCH__
+	case OPT_GYRO_HOR:
+		f = gyro_sens_z.value + dir * 0.1;
+		if ( f < 0.10 ) f = 0.10;
+		if ( f > 10.0 ) f = 10.0;
+		Cvar_SetValue( "gyro_sens_z", f );
+		break;
+	case OPT_GYRO_VER:
+		f = gyro_sens_x.value + dir * 0.1;
+		if ( f < 0.10 ) f = 0.10;
+		if ( f > 10.0 ) f = 10.0;
+		Cvar_SetValue( "gyro_sens_x", f );
+		break;
+#endif
 	}
 }
 
@@ -1330,6 +1350,7 @@ void M_Options_Key (int k)
 		case OPT_VIDEO:
 			M_Menu_Video_f ();
 			break;
+
 		default:
 			M_AdjustSliders (1);
 			break;
@@ -1579,13 +1600,15 @@ enum
 	OPT_JOY_ENABLE = 0,
 	OPT_JOY_YAW,
 	OPT_JOY_PITCH,
+	OPT_JOY_INVERT,
 #ifdef __SWITCH__
+	OPT_JOY_GYRO_ON,
 	OPT_JOY_GYRO_HOR,
 	OPT_JOY_GYRO_VER,
-	OPT_JOY_GYRO_ON,
+	OPT_JOY_GYRO_AXIS_HOR,
 	OPT_JOY_GYRO_INV,
+	OPT_JOY_GYRO_INV_X,
 #endif
-	OPT_JOY_INVERT,
 
 	JOYSTICK_ITEMS
 };
@@ -1594,7 +1617,7 @@ int joystick_cursor = 0;
 
 void M_Joy_AdjustSliders (int dir)
 {
-	float	f;
+	float f;
 
 	S_LocalSound ("misc/menu3.wav");
 
@@ -1627,6 +1650,12 @@ void M_Joy_AdjustSliders (int dir)
 		break;
 	case OPT_JOY_GYRO_INV:	// invert gyro aiming
 		Cvar_Set ("gyro_invert", gyro_invert.value ? "0" : "1");
+		break;
+	case OPT_JOY_GYRO_INV_X: // invert gyro aiming on X axis
+		Cvar_Set ("gyro_invert_x", gyro_invert_x.value ? "0" : "1");
+		break;
+	case OPT_JOY_GYRO_AXIS_HOR:	// gyro axis to control hor look: 0: yaw 1: roll
+		Cvar_Set ("gyro_axis_hor", gyro_axis_hor.value? "0" : "1");
 		break;
 	case OPT_JOY_GYRO_HOR:	// horz gyro speed
 		f = gyro_sens_z.value + dir * 0.1;
@@ -1678,29 +1707,40 @@ void M_Joy_Draw (void)
 	r = (joy_sensitivity_pitch.value - 25)/1000;
 	M_DrawSlider (220, 48 + 8*OPT_JOY_PITCH, r);
 
+	// OPT_JOY_INVERT:
+	M_Print (16, 48 + 8*OPT_JOY_INVERT,	"       Invert Joystick");
+	M_DrawCheckbox (220, 48 + 8*OPT_JOY_INVERT, joy_invert.value);
+
 #ifdef __SWITCH__
 	// OPT_JOY_GYRO_ON:
 	M_Print (16, 48 + 8*OPT_JOY_GYRO_ON,	"           Gyro Aiming");
 	M_DrawCheckbox (220, 48 + 8*OPT_JOY_GYRO_ON, gyro_enable.value);
 
-	// OPT_JOY_GYRO_INV:
-	M_Print (16, 48 + 8*OPT_JOY_GYRO_INV,	"           Invert Gyro");
-	M_DrawCheckbox (220, 48 + 8*OPT_JOY_GYRO_INV, gyro_invert.value);
+	if (gyro_enable.value)
+	{
+		// OPT_JOY_GYRO_INV:
+		M_Print (16, 48 + 8*OPT_JOY_GYRO_INV,	"         Invert Gyro Y");
+		M_DrawCheckbox (220, 48 + 8*OPT_JOY_GYRO_INV, gyro_invert.value);
 
-	// OPT_JOY_GYRO_HOR:
-	M_Print (16, 48 + 8*OPT_JOY_GYRO_HOR,	"          Gyro X Speed");
-	r = gyro_sens_z.value / 10.0;
-	M_DrawSlider (220, 48 + 8*OPT_JOY_GYRO_HOR, r);
+		// OPT_JOY_GYRO_INV:
+		M_Print (16, 48 + 8*OPT_JOY_GYRO_INV_X,	"         Invert Gyro X");
+		M_DrawCheckbox (220, 48 + 8*OPT_JOY_GYRO_INV_X, gyro_invert_x.value);
 
-	// OPT_JOY_GYRO_VER:
-	M_Print (16, 48 + 8*OPT_JOY_GYRO_VER,	"          Gyro Y Speed");
-	r = gyro_sens_x.value / 10.0;
-	M_DrawSlider (220, 48 + 8*OPT_JOY_GYRO_VER, r);
+		// OPT_JOY_GYRO_AXIS_HOR
+		M_Print (16, 48 + 8*OPT_JOY_GYRO_AXIS_HOR,  "        Hor. Gyro Axis");
+		M_Print (220, 48 + 8*OPT_JOY_GYRO_AXIS_HOR, gyro_axis_hor.value? "Roll" : "Yaw");
+
+		// OPT_JOY_GYRO_HOR:
+		M_Print (16, 48 + 8*OPT_JOY_GYRO_HOR,	"          Gyro X Speed");
+		r = gyro_sens_z.value / 10.0;
+		M_DrawSlider (220, 48 + 8*OPT_JOY_GYRO_HOR, r);
+
+		// OPT_JOY_GYRO_VER:
+		M_Print (16, 48 + 8*OPT_JOY_GYRO_VER,	"          Gyro Y Speed");
+		r = gyro_sens_x.value / 10.0;
+		M_DrawSlider (220, 48 + 8*OPT_JOY_GYRO_VER, r);
+	}
 #endif
-
-	// OPT_JOY_INVERT:
-	M_Print (16, 48 + 8*OPT_JOY_INVERT,	"       Invert Joystick");
-	M_DrawCheckbox (220, 48 + 8*OPT_JOY_INVERT, joy_invert.value);
 
 // cursor
 	M_DrawCharacter (200, 48 + joystick_cursor*8, 12+((int)(realtime*4)&1));

@@ -272,6 +272,9 @@ extern	cvar_t	joy_enable;
 #ifdef __SWITCH__
 extern	cvar_t	gyro_enable;
 extern	cvar_t	gyro_invert;
+extern	cvar_t	gyro_invert_x;
+// gyro axis to control hor look: 0: yaw 1: roll
+extern	cvar_t	gyro_axis_hor; 
 extern	cvar_t	gyro_sens_x;
 extern	cvar_t	gyro_sens_z;
 #endif
