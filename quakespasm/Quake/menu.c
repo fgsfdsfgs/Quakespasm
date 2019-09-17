@@ -1583,7 +1583,9 @@ enum
 	OPT_JOY_GYRO_HOR,
 	OPT_JOY_GYRO_VER,
 	OPT_JOY_GYRO_ON,
-	OPT_JOY_GYRO_INV,
+	OPT_JOY_GYRO_INVX,
+	OPT_JOY_GYRO_INVY,
+	OPT_JOY_GYRO_TAXIS,
 #endif
 	OPT_JOY_INVERT,
 
@@ -1625,8 +1627,11 @@ void M_Joy_AdjustSliders (int dir)
 	case OPT_JOY_GYRO_ON:	// gyro aiming
 		Cvar_Set ("gyro_enable", gyro_enable.value ? "0" : "1");
 		break;
-	case OPT_JOY_GYRO_INV:	// invert gyro aiming
-		Cvar_Set ("gyro_invert", gyro_invert.value ? "0" : "1");
+	case OPT_JOY_GYRO_INVX:	// invert gyro aiming
+		Cvar_Set ("gyro_invert_x", gyro_invert_x.value ? "0" : "1");
+		break;
+	case OPT_JOY_GYRO_INVY:	// invert gyro aiming
+		Cvar_Set ("gyro_invert_y", gyro_invert_y.value ? "0" : "1");
 		break;
 	case OPT_JOY_GYRO_HOR:	// horz gyro speed
 		f = gyro_sens_z.value + dir * 0.1;
@@ -1639,6 +1644,9 @@ void M_Joy_AdjustSliders (int dir)
 		if (f < 0.10) f = 0.10;
 		else if (f > 10.0) f = 10.0;
 		Cvar_SetValue ("gyro_sensitivity_x", f);
+		break;
+	case OPT_JOY_GYRO_TAXIS:	// vert gyro speed
+		Cvar_Set ("gyro_turn_axis", gyro_turn_axis.value ? "0" : "1");
 		break;
 #endif
 	}
@@ -1683,9 +1691,17 @@ void M_Joy_Draw (void)
 	M_Print (16, 48 + 8*OPT_JOY_GYRO_ON,	"           Gyro Aiming");
 	M_DrawCheckbox (220, 48 + 8*OPT_JOY_GYRO_ON, gyro_enable.value);
 
-	// OPT_JOY_GYRO_INV:
-	M_Print (16, 48 + 8*OPT_JOY_GYRO_INV,	"           Invert Gyro");
-	M_DrawCheckbox (220, 48 + 8*OPT_JOY_GYRO_INV, gyro_invert.value);
+	// OPT_JOY_GYRO_INVX:
+	M_Print (16, 48 + 8*OPT_JOY_GYRO_INVX,	"         Invert Gyro X");
+	M_DrawCheckbox (220, 48 + 8*OPT_JOY_GYRO_INVX, gyro_invert_x.value);
+
+	// OPT_JOY_GYRO_INVY:
+	M_Print (16, 48 + 8*OPT_JOY_GYRO_INVY,	"         Invert Gyro Y");
+	M_DrawCheckbox (220, 48 + 8*OPT_JOY_GYRO_INVY, gyro_invert_y.value);
+
+	// OPT_JOY_GYRO_TAXIS:
+	M_Print (16, 48 + 8*OPT_JOY_GYRO_TAXIS,	"     Alt. Gyro Turning");
+	M_DrawCheckbox (220, 48 + 8*OPT_JOY_GYRO_TAXIS, gyro_turn_axis.value);
 
 	// OPT_JOY_GYRO_HOR:
 	M_Print (16, 48 + 8*OPT_JOY_GYRO_HOR,	"          Gyro X Speed");

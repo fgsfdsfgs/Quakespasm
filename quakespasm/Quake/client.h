@@ -271,9 +271,11 @@ extern	cvar_t	joy_enable;
 
 #ifdef __SWITCH__
 extern	cvar_t	gyro_enable;
-extern	cvar_t	gyro_invert;
+extern	cvar_t	gyro_invert_x;
+extern	cvar_t	gyro_invert_y;
 extern	cvar_t	gyro_sens_x;
 extern	cvar_t	gyro_sens_z;
+extern	cvar_t	gyro_turn_axis;
 #endif
 
 #define	MAX_TEMP_ENTITIES	256		//johnfitz -- was 64
