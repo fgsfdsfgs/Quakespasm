@@ -1,0 +1,4 @@
+[submodule "nxdk"]
+	path = nxdk
+	url = https://github.com/fgsfdsfgs/nxdk.git
+	branch = dev
