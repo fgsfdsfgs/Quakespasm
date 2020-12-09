@@ -462,8 +462,8 @@ float frustum_skew = 0.0; //used by r_stereo
 void GL_SetFrustum(float fovx, float fovy)
 {
 	float xmax, ymax;
-	xmax = NEARCLIP * tan( fovx * M_PI / 360.0 );
-	ymax = NEARCLIP * tan( fovy * M_PI / 360.0 );
+	xmax = NEARCLIP * Q_tan( fovx * M_PI / 360.0 );
+	ymax = NEARCLIP * Q_tan( fovy * M_PI / 360.0 );
 	glFrustum(-xmax + frustum_skew, xmax + frustum_skew, -ymax, ymax, NEARCLIP, gl_farclip.value);
 }
 
@@ -574,9 +574,9 @@ void R_SetupView (void)
 		int contents = Mod_PointInLeaf (r_origin, cl.worldmodel)->contents;
 		if (contents == CONTENTS_WATER || contents == CONTENTS_SLIME || contents == CONTENTS_LAVA)
 		{
-			//variance is a percentage of width, where width = 2 * tan(fov / 2) otherwise the effect is too dramatic at high FOV and too subtle at low FOV.  what a mess!
-			r_fovx = atan(tan(DEG2RAD(r_refdef.fov_x) / 2) * (0.97 + sin(cl.time * 1.5) * 0.03)) * 2 / M_PI_DIV_180;
-			r_fovy = atan(tan(DEG2RAD(r_refdef.fov_y) / 2) * (1.03 - sin(cl.time * 1.5) * 0.03)) * 2 / M_PI_DIV_180;
+			//variance is a percentage of width, where width = 2 * Q_tan(fov / 2) otherwise the effect is too dramatic at high FOV and too subtle at low FOV.  what a mess!
+			r_fovx = atan(Q_tan(DEG2RAD(r_refdef.fov_x) / 2) * (0.97 + sin(cl.time * 1.5) * 0.03)) * 2 / M_PI_DIV_180;
+			r_fovy = atan(Q_tan(DEG2RAD(r_refdef.fov_y) / 2) * (1.03 - sin(cl.time * 1.5) * 0.03)) * 2 / M_PI_DIV_180;
 		}
 	}
 	//johnfitz

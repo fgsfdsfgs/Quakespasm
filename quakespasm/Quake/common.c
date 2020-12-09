@@ -1543,7 +1543,7 @@ void COM_WriteFile (const char *filename, const void *data, int len)
 
 	Sys_mkdir (com_gamedir); //johnfitz -- if we've switched to a nonexistant gamedir, create it now so we don't crash
 
-	q_snprintf (name, sizeof(name), "%s/%s", com_gamedir, filename);
+	q_snprintf (name, sizeof(name), "%s" PATHSEP "%s", com_gamedir, filename);
 
 	handle = Sys_FileOpenWrite (name);
 	if (handle == -1)
@@ -1592,6 +1592,22 @@ long COM_filelength (FILE *f)
 	fseek (f, pos, SEEK_SET);
 
 	return end;
+}
+
+/*
+===========
+COM_FixupPath
+
+Changes all /s and \\s in the path to PATHSEPs.
+===========
+*/
+static void COM_FixupPath (char *path)
+{
+	for (; path && path[0]; ++path)
+	{
+		if (path[0] == '/' || path[0] == '\\')
+			path[0] = DIR_SEPARATOR_CHAR;
+	}
 }
 
 /*
@@ -1661,7 +1677,11 @@ static int COM_FindFile (const char *filename, int *handle, FILE **file,
 					continue;
 			}
 
-			q_snprintf (netpath, sizeof(netpath), "%s/%s",search->filename, filename);
+			q_snprintf (netpath, sizeof(netpath), "%s" PATHSEP "%s",search->filename, filename);
+#ifdef XBOX
+			// we can't have forward slashes in our path
+			COM_FixupPath (netpath);
+#endif
 			findtime = Sys_FileTime (netpath);
 			if (findtime == -1)
 				continue;
@@ -2028,7 +2048,7 @@ static void COM_AddGameDirectory (const char *base, const char *dir)
 	char pakfile[MAX_OSPATH];
 	qboolean been_here = false;
 
-	q_strlcpy (com_gamedir, va("%s/%s", base, dir), sizeof(com_gamedir));
+	q_strlcpy (com_gamedir, va("%s" PATHSEP "%s", base, dir), sizeof(com_gamedir));
 
 	// assign a path_id to this game directory
 	if (com_searchpaths)
@@ -2046,14 +2066,14 @@ _add_path:
 	// add any pak files in the format pak0.pak pak1.pak, ...
 	for (i = 0; ; i++)
 	{
-		q_snprintf (pakfile, sizeof(pakfile), "%s/pak%i.pak", com_gamedir, i);
+		q_snprintf (pakfile, sizeof(pakfile), "%s" PATHSEP "pak%i.pak", com_gamedir, i);
 		pak = COM_LoadPackFile (pakfile);
 		if (i != 0 || path_id != 1 || fitzmode)
 			qspak = NULL;
 		else {
 			qboolean old = com_modified;
 			if (been_here) base = host_parms->userdir;
-			q_snprintf (pakfile, sizeof(pakfile), "%s/quakespasm.pak", base);
+			q_snprintf (pakfile, sizeof(pakfile), "%s" PATHSEP "quakespasm.pak", base);
 			qspak = COM_LoadPackFile (pakfile);
 			com_modified = old;
 		}
@@ -2077,7 +2097,7 @@ _add_path:
 	if (!been_here && host_parms->userdir != host_parms->basedir)
 	{
 		been_here = true;
-		q_strlcpy(com_gamedir, va("%s/%s", host_parms->userdir, dir), sizeof(com_gamedir));
+		q_strlcpy(com_gamedir, va("%s" PATHSEP "%s", host_parms->userdir, dir), sizeof(com_gamedir));
 		Sys_mkdir(com_gamedir);
 		goto _add_path;
 	}
@@ -2192,7 +2212,7 @@ static void COM_Game_f (void)
 		}
 		else // just update com_gamedir
 		{
-			q_snprintf (com_gamedir, sizeof(com_gamedir), "%s/%s",
+			q_snprintf (com_gamedir, sizeof(com_gamedir), "%s" PATHSEP "%s",
 					(host_parms->userdir != host_parms->basedir)?
 						   host_parms->userdir : com_basedir,
 					GAMENAME);

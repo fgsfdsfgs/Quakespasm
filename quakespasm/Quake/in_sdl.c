@@ -354,7 +354,10 @@ void IN_Init (void)
 	else
 		SDL_StopTextInput();
 #endif
+	/* no mouse on the xbox (yet) */
+#ifndef XBOX
 	if (safemode || COM_CheckParm("-nomouse"))
+#endif
 	{
 		no_mouse = true;
 		/* discard all mouse events when input is deactivated */

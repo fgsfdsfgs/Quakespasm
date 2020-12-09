@@ -40,6 +40,12 @@
 #	define	PLATFORM_OS2		1
 #   endif
 
+#elif defined(XBOX)
+
+#   if !defined(PLATFORM_XBOX)
+#	define	PLATFORM_XBOX		1
+#   endif
+
 #elif defined(_WIN32) || defined(__WIN32__) || defined(_WIN64) || defined(__NT__) || defined(_Windows)
 
 #   if !defined(PLATFORM_WINDOWS)
@@ -117,6 +123,8 @@
 
 #if defined(_WIN64)
 #	define	PLATFORM_STRING	"Win64"
+#elif defined(PLATFORM_XBOX)
+#	define	PLATFORM_STRING	"Xbox"
 #elif defined(PLATFORM_WINDOWS)
 #	define	PLATFORM_STRING	"Windows"
 #elif defined(PLATFORM_DOS)

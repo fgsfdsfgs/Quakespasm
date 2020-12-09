@@ -138,9 +138,41 @@ COMPILE_TIME_ASSERT(sockaddr, offsetof(struct sockaddr, sa_family) == SA_FAM_OFF
 
 #endif	/* end of amiga bsdsocket.library stuff */
 
+/* lwip time */
+#if defined(PLATFORM_XBOX)
+
+#include <lwip/opt.h>
+#include <lwip/arch.h>
+#include <lwip/netdb.h>
+#include <lwip/sockets.h>
+#include <lwip/api.h>
+#include <lwip/errno.h>
+
+#include "net_xbox.h"
+
+#undef gethostname
+#define gethostname NET_Xbox_GetHostname
+
+#undef gethostbyaddr
+#define gethostbyaddr(x, y, z) NULL
+
+#define	SOCKETERRNO errno
+
+typedef int sys_socket_t;
+typedef unsigned int u_long;
+typedef unsigned short u_short;
+#define SOCKET_ERROR -1
+#define INVALID_SOCKET -1
+
+#define	NET_EWOULDBLOCK		EWOULDBLOCK
+#define	NET_ECONNREFUSED	ECONNREFUSED
+
+#define	socketerror(x)	strerror((x))
+/* there is h_errno but no hstrerror() */
+#define	hstrerror(x)	strerror((x))
 
 /* windows includes and compatibility macros */
-#if defined(PLATFORM_WINDOWS)
+#elif defined(PLATFORM_WINDOWS)
 
 /* NOTE: winsock[2].h already includes windows.h */
 #if !defined(_USE_WINSOCK2)

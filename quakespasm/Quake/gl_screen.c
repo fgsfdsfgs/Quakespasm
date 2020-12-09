@@ -234,7 +234,7 @@ void SCR_CheckDrawCenterString (void)
 ====================
 AdaptFovx
 Adapt a 4:3 horizontal FOV to the current screen size using the "Hor+" scaling:
-2.0 * atan(width / height * 3.0 / 4.0 * tan(fov_x / 2.0))
+2.0 * atan(width / height * 3.0 / 4.0 * Q_tan(fov_x / 2.0))
 ====================
 */
 float AdaptFovx (float fov_x, float width, float height)
@@ -248,7 +248,7 @@ float AdaptFovx (float fov_x, float width, float height)
 		return fov_x;
 	if ((x = height / width) == 0.75)
 		return fov_x;
-	a = atan(0.75 / x * tan(fov_x / 360 * M_PI));
+	a = atan(0.75 / x * Q_tan(fov_x / 360 * M_PI));
 	a = a * 360 / M_PI;
 	return a;
 }
@@ -265,7 +265,7 @@ float CalcFovy (float fov_x, float width, float height)
 	if (fov_x < 1 || fov_x > 179)
 		Sys_Error ("Bad fov: %f", fov_x);
 
-	x = width / tan(fov_x / 360 * M_PI);
+	x = width / Q_tan(fov_x / 360 * M_PI);
 	a = atan(height / x);
 	a = a * 360 / M_PI;
 	return a;

@@ -273,7 +273,7 @@ void CL_Record_f (void)
 		track = -1;
 	}
 
-	q_snprintf (name, sizeof(name), "%s/%s", com_gamedir, Cmd_Argv(1));
+	q_snprintf (name, sizeof(name), "%s" PATHSEP "%s", com_gamedir, Cmd_Argv(1));
 
 // start the map up
 	if (c > 2)

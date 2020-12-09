@@ -752,7 +752,7 @@ void History_Init (void)
 	}
 	key_linepos = 1;
 
-	hf = fopen(va("%s/%s", host_parms->userdir, HISTORY_FILE_NAME), "rt");
+	hf = fopen(va("%s" PATHSEP "%s", host_parms->userdir, HISTORY_FILE_NAME), "rt");
 	if (hf != NULL)
 	{
 		do
@@ -789,7 +789,7 @@ void History_Shutdown (void)
 	int i;
 	FILE *hf;
 
-	hf = fopen(va("%s/%s", host_parms->userdir, HISTORY_FILE_NAME), "wt");
+	hf = fopen(va("%s" PATHSEP "%s", host_parms->userdir, HISTORY_FILE_NAME), "wt");
 	if (hf != NULL)
 	{
 		i = edit_line;

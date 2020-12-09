@@ -166,8 +166,10 @@ extern PFNGLCLIENTACTIVETEXTUREARBPROC	GL_ClientActiveTextureFunc;
 extern GLint		gl_max_texture_units; //ericw
 
 //johnfitz -- anisotropic filtering
+#ifndef GL_TEXTURE_MAX_ANISOTROPY_EXT
 #define	GL_TEXTURE_MAX_ANISOTROPY_EXT		0x84FE
 #define	GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT	0x84FF
+#endif
 extern	float		gl_max_anisotropy;
 extern	qboolean	gl_anisotropy_able;
 

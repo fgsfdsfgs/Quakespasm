@@ -21,10 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // console.c
 
-#include <sys/types.h>
+#include <stdio.h>
 #include <time.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #ifdef _WIN32
 #include <io.h>
 #else
@@ -157,7 +155,7 @@ static void Con_Dump_f (void)
 	char	buffer[1024];
 	char	name[MAX_OSPATH];
 
-	q_snprintf (name, sizeof(name), "%s/condump.txt", com_gamedir);
+	q_snprintf (name, sizeof(name), "%s" PATHSEP "condump.txt", com_gamedir);
 	COM_CreatePath (name);
 	f = fopen (name, "w");
 	if (!f)
@@ -455,7 +453,7 @@ static void Con_Print (const char *txt)
 // borrowed from uhexen2 by S.A. for new procs, LOG_Init, LOG_Close
 
 static char	logfilename[MAX_OSPATH];	// current logfile name
-static int	log_fd = -1;			// log file descriptor
+static FILE	*log_fd = NULL;			// log file descriptor
 
 /*
 ================
@@ -464,10 +462,10 @@ Con_DebugLog
 */
 void Con_DebugLog(const char *msg)
 {
-	if (log_fd == -1)
+	if (log_fd == NULL)
 		return;
 
-	write(log_fd, msg, strlen(msg));
+	fprintf(log_fd, "%s", msg);
 }
 
 
@@ -1277,17 +1275,20 @@ void LOG_Init (quakeparms_t *parms)
 	time_t	inittime;
 	char	session[24];
 
+// always log when on Xbox and debugging is on
+#if !defined(XBOX) || defined(NDEBUG) 
 	if (!COM_CheckParm("-condebug"))
 		return;
+#endif
 
 	inittime = time (NULL);
 	strftime (session, sizeof(session), "%m/%d/%Y %H:%M:%S", localtime(&inittime));
-	q_snprintf (logfilename, sizeof(logfilename), "%s/qconsole.log", parms->basedir);
+	q_snprintf (logfilename, sizeof(logfilename), "%s" PATHSEP "qconsole.log", parms->basedir);
 
 //	unlink (logfilename);
 
-	log_fd = open (logfilename, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-	if (log_fd == -1)
+	log_fd = fopen (logfilename, "w");
+	if (log_fd == NULL)
 	{
 		fprintf (stderr, "Error: Unable to create log file %s\n", logfilename);
 		return;
@@ -1300,9 +1301,9 @@ void LOG_Init (quakeparms_t *parms)
 
 void LOG_Close (void)
 {
-	if (log_fd == -1)
+	if (log_fd == NULL)
 		return;
-	close (log_fd);
-	log_fd = -1;
+	fclose (log_fd);
+	log_fd = NULL;
 }
 

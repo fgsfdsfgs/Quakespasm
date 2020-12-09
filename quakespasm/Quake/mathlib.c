@@ -348,6 +348,13 @@ int Q_log2(int val)
 	return answer;
 }
 
+#ifdef XBOX
+// REMOVEME: tan is currently broken and returns 0.0
+double Q_tan(double x)
+{
+	return sin(x) / cos(x);
+}
+#endif
 
 /*
 ================

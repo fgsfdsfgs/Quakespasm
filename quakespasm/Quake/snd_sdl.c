@@ -101,7 +101,11 @@ qboolean SNDDMA_Init (dma_t *dma)
 	else if (desired.freq <= 44100)
 		desired.samples = 1024;
 	else if (desired.freq <= 56000)
+#ifdef XBOX
+		desired.samples = 1024; /* for 48 kHz; nxdk-sdl uses 1024 samples */
+#else
 		desired.samples = 2048; /* for 48 kHz */
+#endif
 	else
 		desired.samples = 4096; /* for 96 kHz */
 	desired.callback = paint_audio;

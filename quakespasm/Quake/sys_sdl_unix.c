@@ -270,7 +270,7 @@ static void Sys_GetUserdir (char *dst, size_t dstsize)
 	if (n >= dstsize)
 		Sys_Error ("Insufficient array size for userspace directory");
 
-	q_snprintf (dst, dstsize, "%s/%s", home_dir, SYS_USERDIR);
+	q_snprintf (dst, dstsize, "%s" PATHSEP "%s", home_dir, SYS_USERDIR);
 }
 #endif	/* DO_USERDIRS */
 

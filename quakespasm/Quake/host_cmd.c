@@ -25,6 +25,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef _WIN32
 #include <dirent.h>
 #endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
 
 extern cvar_t	pausable;
 
@@ -1070,7 +1074,7 @@ void Host_Savegame_f (void)
 		}
 	}
 
-	q_snprintf (name, sizeof(name), "%s/%s", com_gamedir, Cmd_Argv(1));
+	q_snprintf (name, sizeof(name), "%s" PATHSEP "%s", com_gamedir, Cmd_Argv(1));
 	COM_AddExtension (name, ".sav", sizeof(name));
 
 	Con_Printf ("Saving game to %s...\n", name);
