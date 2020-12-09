@@ -1,0 +1,178 @@
+# GNU Makefile for QuakeSpasm Xbox.
+# "make DEBUG=y" to build a debug client.
+# "make DO_USERDIRS=1" to enable user directories support
+
+# Enable SDL2
+USE_SDL2=1
+
+# Enable/Disable user directories support
+DO_USERDIRS=0
+
+### Enable/Disable codecs for streaming music support
+USE_CODEC_WAVE=1
+USE_CODEC_FLAC=0
+USE_CODEC_MP3=0
+USE_CODEC_VORBIS=0
+USE_CODEC_OPUS=0
+# either mikmod or xmp
+USE_CODEC_MIKMOD=0
+USE_CODEC_XMP=0
+USE_CODEC_UMX=0
+
+# which library to use for mp3 decoding: mad or mpg123
+MP3LIB=mad
+# which library to use for ogg decoding: vorbis or tremor
+VORBISLIB=vorbis
+
+# ---------------------------
+# Xbox variables
+# ---------------------------
+
+XBE_TITLE = QuakeSpasm
+GEN_XISO = $(XBE_TITLE).iso
+NXDK_DIR ?= $(CURDIR)/../../nxdk
+NXDK_NET = y
+NXDK_PBGL = y
+NXDK_SDL = y
+NXDK_STACKSIZE = 1048576
+DEBUG ?= 0
+
+# ---------------------------
+# Build variables
+# ---------------------------
+
+ifneq ($(DEBUG),0)
+  # DFLAGS += -DDEBUG
+else
+  DFLAGS += -DNDEBUG
+  CFLAGS += -O2
+endif
+
+ifeq ($(DO_USERDIRS),1)
+  CFLAGS += -DDO_USERDIRS=1
+endif
+
+ifeq ($(USE_CODEC_WAVE),1)
+  CFLAGS+= -DUSE_CODEC_WAVE
+endif
+ifeq ($(USE_CODEC_FLAC),1)
+  CFLAGS+= -DUSE_CODEC_FLAC
+endif
+ifeq ($(USE_CODEC_OPUS),1)
+  CFLAGS+= -DUSE_CODEC_OPUS
+  CFLAGS+= $(shell pkg-config --cflags opusfile)
+endif
+ifeq ($(USE_CODEC_VORBIS),1)
+  CFLAGS+= -DUSE_CODEC_VORBIS $(cpp_vorbisdec)
+endif
+ifeq ($(USE_CODEC_MP3),1)
+  CFLAGS+= -DUSE_CODEC_MP3
+endif
+ifeq ($(USE_CODEC_MIKMOD),1)
+  CFLAGS+= -DUSE_CODEC_MIKMOD
+endif
+ifeq ($(USE_CODEC_XMP),1)
+  CFLAGS+= -DUSE_CODEC_XMP
+endif
+ifeq ($(USE_CODEC_UMX),1)
+  CFLAGS+= -DUSE_CODEC_UMX
+endif
+ifeq ($(USE_SDL2),1)
+  CFLAGS+= -DUSE_SDL2
+endif
+
+CFLAGS+= $(DFLAGS)
+
+# ----------------------------------------------------------------------------
+# Source files
+# ----------------------------------------------------------------------------
+
+MUSIC_SRCS:= bgmusic.c \
+	snd_codec.c \
+	snd_flac.c \
+	snd_wave.c \
+	snd_vorbis.c \
+	snd_opus.c \
+	snd_mp3.c \
+	snd_mp3tag.c \
+	snd_mikmod.c \
+	snd_xmp.c \
+	snd_umx.c
+COMSRC_SND := snd_dma.c snd_mix.c snd_mem.c $(MUSIC_SRCS)
+SYSSRC_SND := snd_sdl.c
+SYSSRC_CDA := cd_sdl.c
+SYSSRC_INPUT := in_sdl.c
+SYSSRC_GL_VID:= gl_vidxbox.c
+SYSSRC_NET := net_bsd.c net_udp.c net_xbox.c
+SYSSRC_SYS := pl_xbox.c sys_sdl_xbox.c
+SYSSRC_MAIN:= main_xbox.c
+SYSSRC_RES :=
+
+GLSRCS = \
+	gl_refrag.c \
+	gl_rlight.c \
+	gl_rmain.c \
+	gl_fog.c \
+	gl_rmisc.c \
+	r_part.c \
+	r_world.c \
+	gl_screen.c \
+	gl_sky.c \
+	gl_warp.c \
+	$(SYSSRC_GL_VID) \
+	gl_draw.c \
+	image.c \
+	gl_texmgr.c \
+	gl_mesh.c \
+	r_sprite.c \
+	r_alias.c \
+	r_brush.c \
+	gl_model.c
+
+SRCS := strlcat.c \
+	strlcpy.c \
+	$(GLSRCS) \
+	$(SYSSRC_INPUT) \
+	$(COMSRC_SND) \
+	$(SYSSRC_SND) \
+	$(SYSSRC_CDA) \
+	$(SYSSRC_NET) \
+	net_dgrm.c \
+	net_loop.c \
+	net_main.c \
+	chase.c \
+	cl_demo.c \
+	cl_input.c \
+	cl_main.c \
+	cl_parse.c \
+	cl_tent.c \
+	console.c \
+	keys.c \
+	menu.c \
+	sbar.c \
+	view.c \
+	wad.c \
+	cmd.c \
+	common.c \
+	crc.c \
+	cvar.c \
+	cfgfile.c \
+	host.c \
+	host_cmd.c \
+	mathlib.c \
+	pr_cmds.c \
+	pr_edict.c \
+	pr_exec.c \
+	sv_main.c \
+	sv_move.c \
+	sv_phys.c \
+	sv_user.c \
+	world.c \
+	zone.c \
+	$(SYSSRC_SYS) $(SYSSRC_MAIN) $(SYSSRC_RES)
+
+default: all
+
+image.c: lodepng.c lodepng.h stb_image_write.h
+
+include $(NXDK_DIR)/Makefile
