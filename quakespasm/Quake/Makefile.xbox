@@ -45,7 +45,7 @@ ifneq ($(DEBUG),0)
   # DFLAGS += -DDEBUG
 else
   DFLAGS += -DNDEBUG
-  CFLAGS += -O2
+  CFLAGS += -Ofast
 endif
 
 ifeq ($(DO_USERDIRS),1)
