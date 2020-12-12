@@ -120,7 +120,7 @@ void NET_Xbox_Init(void)
 	{
 		DWORD timeout;
 		debugPrint("NET_Xbox_Init: Waiting for DHCP...\n");
-		timeout = GetTickCount() + 15000; // time out in 15 sec
+		timeout = GetTickCount() + 6000; // time out in 6 sec
 		while (dhcp_supplied_address(g_pnetif) == 0)
 		{
 			if (GetTickCount() > timeout)
