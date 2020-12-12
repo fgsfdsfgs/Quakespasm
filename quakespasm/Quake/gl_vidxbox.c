@@ -31,8 +31,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <hal/video.h>
 #include <hal/debug.h>
 #include <pbgl.h>
-#include <pbkit/pbkit.h>
 #include <windows.h>
+
+#ifdef DEBUG_MEMSTATS
+#include <pbkit/pbkit.h>
+#endif
 
 /* TODO: when we get a get_proc_address, replace this */
 #define pbgl_get_proc_address(x) NULL
@@ -77,7 +80,7 @@ static void ClearAllStates (void);
 static void GL_Init (void);
 static void GL_SetupState (void); //johnfitz
 
-#ifndef NDEBUG
+#ifdef DEBUG_MEMSTATS
 static uint64_t stat_frame_start = 0;
 static uint64_t stat_frame_time = 0;
 static void DrawMemStats (void);
@@ -100,6 +103,7 @@ qboolean gl_glsl_able = false; //ericw
 GLint gl_max_texture_units = 0; //ericw
 qboolean gl_glsl_gamma_able = false; //ericw
 qboolean gl_glsl_alias_able = false; //ericw
+qboolean gl_generate_mipmap = false;
 int gl_stencilbits;
 
 PFNGLMULTITEXCOORD2FARBPROC GL_MTexCoord2fFunc = NULL; //johnfitz
@@ -143,7 +147,7 @@ static cvar_t	vid_width = {"vid_width", "640", CVAR_ARCHIVE};
 static cvar_t	vid_height = {"vid_height", "480", CVAR_ARCHIVE};
 static cvar_t	vid_bpp = {"vid_bpp", "32", CVAR_ARCHIVE};
 static cvar_t	vid_refreshrate = {"vid_refreshrate", "60", CVAR_ARCHIVE};
-static cvar_t	vid_vsync = {"vid_vsync", "0", CVAR_ARCHIVE};
+static cvar_t	vid_vsync = {"vid_vsync", "1", CVAR_ARCHIVE};
 static cvar_t	vid_fsaa = {"vid_fsaa", "0", CVAR_ARCHIVE}; // QuakeSpasm
 static cvar_t	vid_desktopfullscreen = {"vid_desktopfullscreen", "0", CVAR_ARCHIVE}; // QuakeSpasm
 static cvar_t	vid_borderless = {"vid_borderless", "0", CVAR_ARCHIVE}; // QuakeSpasm
@@ -717,7 +721,7 @@ static void GL_CheckExtensions (void)
 
 	// multitexture
 	//
-	if (1 || COM_CheckParm("-nomtex"))
+	if (COM_CheckParm("-nomtex"))
 		Con_Warning ("Mutitexture disabled at command line\n");
 	else if (GL_ParseExtensionList(gl_extensions, "GL_ARB_multitexture"))
 	{
@@ -939,6 +943,13 @@ static void GL_CheckExtensions (void)
 	{
 		Con_Warning ("GLSL alias model rendering not available, using Fitz renderer\n");
 	}
+	
+	// GL mipmap gen
+	if ((gl_version_major > 1 || gl_version_minor >= 4) || GL_ParseExtensionList(gl_extensions, "GL_PBGL_texture_generate_mipmap"))
+	{
+		gl_generate_mipmap = true;
+		Con_Printf("FOUND: GL_GENERATE_MIPMAP\n");
+	}
 }
 
 /*
@@ -1030,7 +1041,7 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 	*x = *y = 0;
 	*width = vid.width;
 	*height = vid.height;
-#ifndef NDEBUG
+#ifdef DEBUG_MEMSTATS
 	stat_frame_start = rdtsc();
 #endif
 }
@@ -1044,7 +1055,7 @@ void GL_EndRendering (void)
 {
 	if (!scr_skipupdate)
 	{
-#ifndef NDEBUG
+#ifdef DEBUG_MEMSTATS
 		DrawMemStats();
 #endif
 		pbgl_swap_buffers();
@@ -1856,7 +1867,7 @@ static void VID_Menu_f (void)
 	VID_Menu_RebuildRateList ();
 }
 
-#ifndef NDEBUG
+#ifdef DEBUG_MEMSTATS
 /*
 ================
 DrawMemStats
@@ -1873,6 +1884,7 @@ static void DrawMemStats (void)
 	uint64_t frame_end_tsc;
 	int now;
 	uint32_t uspf, usbf;
+	uint32_t *p;
 
 	while(pb_busy());
 
@@ -1898,6 +1910,11 @@ static void DrawMemStats (void)
 		usbf/1000, usbf%1000/100,
 		mem_stats.AvailablePages >> 8, mem_stats.TotalPhysicalPages >> 8);
 	pb_draw_text_screen();
+	// restore clear rect
+	p = pb_begin();
+	p = pb_push1(p, NV097_SET_CLEAR_RECT_VERTICAL, (pb_back_buffer_height() << 16));
+	p = pb_push1(p, NV097_SET_CLEAR_RECT_HORIZONTAL, (pb_back_buffer_width() << 16));
+	pb_end(p);
 }
 
 static uint64_t rdtsc (void)

@@ -8,6 +8,9 @@ USE_SDL2=1
 # Enable/Disable user directories support
 DO_USERDIRS=0
 
+# Enable/Disable memory stats overlay
+DEBUG_MEMSTATS?=0
+
 ### Enable/Disable codecs for streaming music support
 USE_CODEC_WAVE=1
 USE_CODEC_FLAC=0
@@ -43,9 +46,14 @@ DEBUG ?= 0
 
 ifneq ($(DEBUG),0)
   # DFLAGS += -DDEBUG
+  CFLAGS += -DDEBUG_MEMSTATS
 else
   DFLAGS += -DNDEBUG
   CFLAGS += -Ofast
+endif
+
+ifneq ($(DEBUG_MEMSTATS),0)
+  CFLAGS += -DDEBUG_MEMSTATS
 endif
 
 ifeq ($(DO_USERDIRS),1)

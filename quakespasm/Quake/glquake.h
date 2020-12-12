@@ -264,6 +264,8 @@ void GL_PolygonOffset (int);
 extern qboolean gl_texture_env_combine;
 extern qboolean gl_texture_env_add; // for GL_EXT_texture_env_add
 
+extern qboolean gl_generate_mipmap;// for GL_GENERATE_MIPMAP
+
 //johnfitz -- rendering statistics
 extern int rs_brushpolys, rs_aliaspolys, rs_skypolys, rs_particles, rs_fogpolys;
 extern int rs_dynamiclightmaps, rs_brushpasses, rs_aliaspasses, rs_skypasses;

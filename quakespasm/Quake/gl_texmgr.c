@@ -1044,11 +1044,14 @@ static void TexMgr_LoadImage32 (gltexture_t *glt, unsigned *data)
 
 	// upload
 	GL_Bind (glt);
+	// if we can, let GL generate the mips
+	if (gl_generate_mipmap && (glt->flags & TEXPREF_MIPMAP))
+		glTexParameteri (GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 	internalformat = (glt->flags & TEXPREF_ALPHA) ? gl_alpha_format : gl_solid_format;
 	glTexImage2D (GL_TEXTURE_2D, 0, internalformat, glt->width, glt->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
-	// upload mipmaps
-	if (glt->flags & TEXPREF_MIPMAP)
+	// upload mipmaps manually if GL couldn't generate them
+	if (!gl_generate_mipmap && (glt->flags & TEXPREF_MIPMAP))
 	{
 		mipwidth = glt->width;
 		mipheight = glt->height;
