@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 	/* set default video mode as soon as possible to obtain debug output */
 	XVideoSetMode(640, 480, 32, REFRESH_DEFAULT);
 
-  pb_size(2 * 1024 * 1024);
+	pb_size(1 * 1024 * 1024);
 
 	/* init networking right away too */
 	NET_Xbox_Init();
