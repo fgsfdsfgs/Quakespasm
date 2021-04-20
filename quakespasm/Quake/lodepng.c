@@ -95,8 +95,10 @@ void* lodepng_realloc(void* ptr, size_t new_size);
 void lodepng_free(void* ptr);
 #endif /*LODEPNG_COMPILE_ALLOCATORS*/
 
-#if (defined(__GNUC__) && defined(__GNUC_MINOR__) && (__GNUC__ >= 3) && (__GNUC_MINOR__ >= 1)) ||\
-    (defined(_MSC_VER) && (_MSC_VER >= 1400)) || (defined(__WATCOMC__) && (__WATCOMC__ >= 1250))
+/* restrict is not available in C90, but use it when supported by the compiler */
+#if (defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))) ||\
+    (defined(_MSC_VER) && (_MSC_VER >= 1400)) || \
+    (defined(__WATCOMC__) && (__WATCOMC__ >= 1250) && !defined(__cplusplus))
 #define LODEPNG_RESTRICT __restrict
 #else
 #define LODEPNG_RESTRICT /* not available */
@@ -2123,7 +2125,7 @@ unsigned lodepng_zlib_compress(unsigned char** out, size_t* outsize, const unsig
   if(!error) {
     *outsize = deflatesize + 6;
     *out = (unsigned char*)lodepng_malloc(*outsize);
-    if(!out) error = 83; /*alloc fail*/
+    if(!*out) error = 83; /*alloc fail*/
   }
 
   if(!error) {

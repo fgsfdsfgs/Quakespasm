@@ -26,8 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern cvar_t gl_fullbrights, r_drawflat, gl_overbright, r_oldwater, r_oldskyleaf, r_showtris; //johnfitz
 
-extern glpoly_t	*lightmap_polys[MAX_LIGHTMAPS];
-
 byte *SV_FatPVS (vec3_t org, qmodel_t *worldmodel);
 
 int vis_changed; //if true, force pvs to be refreshed
@@ -56,7 +54,8 @@ void R_ClearTextureChains (qmodel_t *mod, texchain_t chain)
 			mod->textures[i]->texturechains[chain] = NULL;
 			
 	// clear lightmap chains
-	memset (lightmap_polys, 0, sizeof(lightmap_polys));
+	for (i=0 ; i<lightmap_count ; i++)
+		lightmap[i].polys = NULL;
 }
 
 /*
@@ -85,7 +84,8 @@ void R_MarkSurfaces (void)
 	qboolean	nearwaterportal;
 
 	// clear lightmap chains
-	memset (lightmap_polys, 0, sizeof(lightmap_polys));
+	for (i=0 ; i<lightmap_count ; i++)
+		lightmap[i].polys = NULL;
 
 	// check this leaf for water portals
 	// TODO: loop through all water surfs and use distance to leaf cullbox
@@ -248,7 +248,8 @@ void R_BuildLightmapChains (qmodel_t *model, texchain_t chain)
 	int i;
 
 	// clear lightmap chains (already done in r_marksurfaces, but clearing them here to be safe becuase of r_stereo)
-	memset (lightmap_polys, 0, sizeof(lightmap_polys));
+	for (i=0 ; i<lightmap_count ; i++)
+		lightmap[i].polys = NULL;
 
 	// now rebuild them
 	for (i=0 ; i<model->numtextures ; i++)
@@ -538,7 +539,7 @@ void R_DrawTextureChains_Multitexture (qmodel_t *model, entity_t *ent, texchain_
 					GL_EnableMultitexture(); // selects TEXTURE1
 					bound = true;
 				}
-				GL_Bind (lightmap_textures[s->lightmaptexturenum]);
+				GL_Bind (lightmap[s->lightmaptexturenum].texture);
 				glBegin(GL_POLYGON);
 				v = s->polys->verts[0];
 				for (j=0 ; j<s->polys->numverts ; j++, v+= VERTEXSIZE)
@@ -774,13 +775,13 @@ void R_DrawLightmapChains (void)
 	glpoly_t	*p;
 	float		*v;
 
-	for (i=0 ; i<MAX_LIGHTMAPS ; i++)
+	for (i=0 ; i<lightmap_count ; i++)
 	{
-		if (!lightmap_polys[i])
+		if (!lightmap[i].polys)
 			continue;
 
-		GL_Bind (lightmap_textures[i]);
-		for (p = lightmap_polys[i]; p; p=p->chain)
+		GL_Bind (lightmap[i].texture);
+		for (p = lightmap[i].polys; p; p=p->chain)
 		{
 			glBegin (GL_POLYGON);
 			v = p->verts[0];
@@ -824,11 +825,16 @@ void GLWorld_CreateShaders (void)
 		{ "TexCoords", texCoordsAttrIndex },
 		{ "LMCoords", LMCoordsAttrIndex }
 	};
-	
+
+	// Driver bug workarounds:
+	// - "Intel(R) UHD Graphics 600" version "4.6.0 - Build 26.20.100.7263"
+	//    crashing on glUseProgram with `vec3 Vert` and
+	//    `gl_ModelViewProjectionMatrix * vec4(Vert, 1.0);`. Work around with
+	//    making Vert a vec4. (https://sourceforge.net/p/quakespasm/bugs/39/)
 	const GLchar *vertSource = \
 		"#version 110\n"
 		"\n"
-		"attribute vec3 Vert;\n"
+		"attribute vec4 Vert;\n"
 		"attribute vec2 TexCoords;\n"
 		"attribute vec2 LMCoords;\n"
 		"\n"
@@ -838,7 +844,7 @@ void GLWorld_CreateShaders (void)
 		"{\n"
 		"	gl_TexCoord[0] = vec4(TexCoords, 0.0, 0.0);\n"
 		"	gl_TexCoord[1] = vec4(LMCoords, 0.0, 0.0);\n"
-		"	gl_Position = gl_ModelViewProjectionMatrix * vec4(Vert, 1.0);\n"
+		"	gl_Position = gl_ModelViewProjectionMatrix * Vert;\n"
 		"	FogFragCoord = gl_Position.w;\n"
 		"}\n";
 	
@@ -984,7 +990,7 @@ void R_DrawTextureChains_GLSL (qmodel_t *model, entity_t *ent, texchain_t chain)
 					R_FlushBatch ();
 
 				GL_SelectTexture (GL_TEXTURE1);
-				GL_Bind (lightmap_textures[s->lightmaptexturenum]);
+				GL_Bind (lightmap[s->lightmaptexturenum].texture);
 				lastlightmap = s->lightmaptexturenum;
 				R_BatchSurface (s);
 

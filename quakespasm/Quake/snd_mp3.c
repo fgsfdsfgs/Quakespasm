@@ -4,9 +4,7 @@
  * SoX contributors, written by Fabrizio Gennari <fabrizio.ge@tiscali.it>,
  * with the decoding part based on the decoder tutorial program madlld
  * written by Bertrand Petit <madlld@phoe.fmug.org> (BSD license, see at
- * http://www.bsd-dk.dk/~elrond/audio/madlld/).  The tag identification
- * functions were initially adapted from GPL-licensed libid3tag library
- * (see at http://www.underbit.com/products/mad/) then rephrased further.
+ * http://www.bsd-dk.dk/~elrond/audio/madlld/).
  * Adapted for use in Quake and Hexen II game engines by O.Sezer:
  * Copyright (C) 2010-2019 O.Sezer <sezero@users.sourceforge.net>
  *
@@ -62,208 +60,6 @@ typedef struct _mp3_priv_t
 	size_t			FrameCount;
 } mp3_priv_t;
 
-/* http://id3.org/ID3v1 :  3 bytes "TAG" identifier and 125 bytes tag data */
-static inline qboolean tag_is_id3v1(const unsigned char *data, size_t length)
-{
-	if (length >= 3 &&
-	     data[0] == 'T' && data[1] == 'A' && data[2] == 'G')
-	{
-		return true;
-	}
-	return false;
-}
-
-/* ID3v1 extended tag: just before ID3v1, always 227 bytes.
- * https://www.getid3.org/phpBB3/viewtopic.php?t=1202
- * https://en.wikipedia.org/wiki/ID3v1#Enhanced_tag
- * Not an official standard, is only supported by few programs. */
-static inline qboolean tag_is_id3v1ext(const unsigned char *data, size_t length)
-{
-	if (length >= 4 &&
-	     data[0] == 'T' && data[1] == 'A' && data[2] == 'G' && data[3] == '+')
-	{
-		return true;
-	}
-	return false;
-}
-
-#define ID3_TAG_FLAG_FOOTERPRESENT 0x10
-static inline qboolean tag_is_id3v2(const unsigned char *data, size_t length)
-{
-	/* ID3v2 header is 10 bytes:  http://id3.org/id3v2.4.0-structure */
-	if (length >= 10 &&
-	/* bytes 0-2: "ID3" identifier */
-	    (data[0] == 'I' && data[1] == 'D' && data[2] == '3') &&
-	/* bytes 3-4: version num (major,revision), each byte always less than 0xff. */
-	    data[3] < 0xff && data[4] < 0xff &&
-	/* bytes 6-9 are the ID3v2 tag size: a 32 bit 'synchsafe' integer, i.e. the
-	 * highest bit 7 in each byte zeroed.  i.e.: 7 bit information in each byte ->
-	  * effectively a 28 bit value.  */
-	    data[6] < 0x80 && data[7] < 0x80 && data[8] < 0x80 && data[9] < 0x80)
-	{
-		return true;
-	}
-	return false;
-}
-
-static inline long get_id3v2_len(const unsigned char *data, long datalen)
-{
-	/* size is a 'synchsafe' integer (see above) */
-	long taglen = (long)((data[6]<<21) + (data[7]<<14) + (data[8]<<7) + data[9]);
-	taglen += 10; /* header size */
-	/* ID3v2 header[5] is flags (bits 4-7 only, 0-3 are zero).
-	 * bit 4 set: footer is present (a copy of the header but
-	 * with "3DI" as ident.)  */
-	if (data[5] & ID3_TAG_FLAG_FOOTERPRESENT)
-		taglen += 10;
-	for ( ; taglen < datalen && !data[taglen]; ++taglen)
-		; /* consume optional padding (always zeroes) */
-	return taglen;
-}
-
-/* http://wiki.hydrogenaud.io/index.php?title=APEv1_specification
- * http://wiki.hydrogenaud.io/index.php?title=APEv2_specification
- * Header/footer is 32 bytes: bytes 0-7 ident, bytes 8-11 version,
- * bytes 12-17 size.  bytes 24-31 are reserved: must be all zeroes.
- */
-static inline qboolean tag_is_apetag(const unsigned char *data, size_t length)
-{
-	unsigned int v;
-
-	if (length < 32) return false;
-	if (memcmp(data,"APETAGEX",8) != 0)
-		return false;
-	v = (data[11]<<24) | (data[10]<<16) | (data[9]<<8) | data[8];
-	if (v != 2000U && v != 1000U)
-		return false;
-	v = 0;
-	if (memcmp(&data[24],&v,4) != 0 || memcmp(&data[28],&v,4) != 0)
-		return false;
-	return true;
-}
-
-static inline long get_ape_len(const unsigned char *data, long datalen, unsigned int *version)
-{
-	long taglen = (long)((data[15]<<24) | (data[14]<<16) | (data[13]<<8) | data[12]);
-	*version = (data[11]<<24) | (data[10]<<16) | (data[9]<<8) | data[8];
-	return taglen; /* caller will handle the additional v2 header length */
-}
-
-static int skip_tags_first(snd_stream_t *stream, unsigned char *buf, size_t bufsize)
-{
-	long len; size_t readsize;
-
-	readsize = FS_fread(buf, 1, bufsize, &stream->fh);
-	if (!readsize || FS_ferror(&stream->fh))
-		return -1;
-
-	/* ID3v2 tag is at the start */
-	if (tag_is_id3v2(buf, readsize))
-	{
-		len = get_id3v2_len(buf, (long)readsize);
-		if (len >= stream->fh.length) return -1;
-		/* hack the fshandle_t start pos and length members */
-		stream->fh.start += len;
-		stream->fh.length -= len;
-		FS_rewind(&stream->fh);
-		Con_DPrintf("MP3: skipped %ld bytes ID3v2 tag\n", len);
-	}
-	/* APE tag _might_ be at the start: read the header */
-	else if (tag_is_apetag(buf, readsize))
-	{
-		unsigned int v;
-		len = get_ape_len(buf, (long)readsize, &v);
-		len += 32; /* we're at top: have a header. */
-		if (len >= stream->fh.length) return -1;
-		/* hack the fshandle_t start pos and length members */
-		stream->fh.start += len;
-		stream->fh.length -= len;
-		FS_rewind(&stream->fh);
-		Con_DPrintf("MP3: skipped %ld bytes APEv2 tag\n", len);
-	}
-
-	/* ID3v1 tag is at the end */
-	if (stream->fh.length < 128)
-		goto ape;
-	FS_fseek(&stream->fh, -128, SEEK_END);
-	readsize = FS_fread(buf, 1, 128, &stream->fh);
-	FS_rewind(&stream->fh);
-	if (readsize != 128) return -1;
-	if (tag_is_id3v1(buf, 128))
-	{
-		/* hack fshandle_t->length */
-		stream->fh.length -= 128;
-		Con_DPrintf("MP3: skipped ID3v1 tag\n");
-
-		/* APE tag may be before the ID3v1: read the footer */
-		if (stream->fh.length < 32)
-			goto end;
-		FS_fseek(&stream->fh, -32, SEEK_END);
-		readsize = FS_fread(buf, 1, 32, &stream->fh);
-		FS_rewind(&stream->fh);
-		if (readsize != 32) return -1;
-		if (tag_is_apetag(buf, 32))
-		{
-			unsigned int v;
-			len = get_ape_len(buf, (long)readsize, &v);
-			if (v == 2000U) len += 32; /* header */
-			if (len >= stream->fh.length) return -1;
-			if (v == 2000U) { /* verify header : */
-				FS_fseek(&stream->fh, -len, SEEK_END);
-				readsize = FS_fread(buf, 1, 32, &stream->fh);
-				FS_rewind(&stream->fh);
-				if (readsize != 32) return -1;
-				if (!tag_is_apetag(buf, 32)) return -1;
-			}
-			/* hack fshandle_t->length */
-			stream->fh.length -= len;
-			Con_DPrintf("MP3: skipped %ld bytes APEv%u tag\n", len, v/1000);
-			goto end;
-		}
-		/* extended ID3v1 just before the ID3v1 tag? (unlikely)  */
-		if (stream->fh.length < 227)
-			goto end;
-		FS_fseek(&stream->fh, -227, SEEK_END);
-		readsize = FS_fread(buf, 1, 227, &stream->fh);
-		FS_rewind(&stream->fh);
-		if (readsize != 227) return -1;
-		if (tag_is_id3v1ext(buf, 227))
-		{
-			/* hack fshandle_t->length */
-			stream->fh.length -= 227;
-			Con_DPrintf("MP3: skipped ID3v1 extended tag\n");
-			goto end;
-		}
-	}
-	ape:	/* APE tag may be at the end: read the footer */
-	if (stream->fh.length >= 32)
-	{
-		FS_fseek(&stream->fh, -32, SEEK_END);
-		readsize = FS_fread(buf, 1, 32, &stream->fh);
-		FS_rewind(&stream->fh);
-		if (readsize != 32) return -1;
-		if (tag_is_apetag(buf, 32))
-		{
-			unsigned int v;
-			len = get_ape_len(buf, (long)readsize, &v);
-			if (v == 2000U) len += 32; /* header */
-			if (len >= stream->fh.length) return -1;
-			if (v == 2000U) { /* verify header : */
-				FS_fseek(&stream->fh, -len, SEEK_END);
-				readsize = FS_fread(buf, 1, 32, &stream->fh);
-				FS_rewind(&stream->fh);
-				if (readsize != 32) return -1;
-				if (!tag_is_apetag(buf, 32)) return -1;
-			}
-			/* hack fshandle_t->length */
-			stream->fh.length -= len;
-			Con_DPrintf("MP3: skipped %ld bytes APEv%u tag\n", len, v/1000);
-		}
-	}
-
-	end:
-	return (stream->fh.length > 0)? 0:  -1;
-}
 
 /* (Re)fill the stream buffer that is to be decoded.  If any data
  * still exists in the buffer then they are first shifted to be
@@ -304,10 +100,6 @@ static int mp3_startread(snd_stream_t *stream)
 	mp3_priv_t *p = (mp3_priv_t *) stream->priv;
 	size_t ReadSize;
 
-	/* skip tags known to be at start or end and adjust the file */
-	if (skip_tags_first(stream, p->mp3_buffer, MP3_BUFFER_SIZE) < 0)
-		return -1;
-
 	mad_stream_init(&p->Stream);
 	mad_frame_init(&p->Frame);
 	mad_synth_init(&p->Synth);
@@ -324,8 +116,7 @@ static int mp3_startread(snd_stream_t *stream)
 	mad_stream_buffer(&p->Stream, p->mp3_buffer, ReadSize);
 
 	/* Find a valid frame before starting up.  This makes sure
-	 * that we have a valid MP3 and also skips past ID3v2 tags
-	 * at the beginning of the audio file.
+	 * that we have a valid MP3.
 	 */
 	p->Stream.error = MAD_ERROR_NONE;
 	while (mad_frame_decode(&p->Frame,&p->Stream))
@@ -597,6 +388,12 @@ static void S_MP3_CodecShutdown (void)
 static qboolean S_MP3_CodecOpenStream (snd_stream_t *stream)
 {
 	int err;
+
+	if (mp3_skiptags(stream) < 0)
+	{
+		Con_Printf("Corrupt mp3 file (bad tags.)\n");
+		return false;
+	}
 
 	stream->priv = calloc(1, sizeof(mp3_priv_t));
 	if (!stream->priv)

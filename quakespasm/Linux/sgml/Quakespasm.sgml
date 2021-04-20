@@ -4,7 +4,7 @@
 <toc>
 <verb></verb>
 
-<em>Page last edited: Feb. 2018</em>
+<em>Page last edited: Sep. 2019</em>
 
 <sect> About <p>
 
@@ -153,6 +153,17 @@ these patched libSDL binaries may help.
     name="Gamma patched libSDL (x86_64-linux)">
 </itemize>
 <sect> Changes<p>
+
+<sect1> Changes in 0.93.2<p>
+<itemize>
+<item> Lightmaps are now dynamically allocated (from QSS), and BLOCK_WIDTH/HEIGHT raised from 128 to 256.
+<item> Fixed several uncheked limits that would crash the Slayer's Testaments mod (sf.net bug #33).
+<item> Raised MAXALIASTRIS from 2048 to 4096, so that the Slayer's Testaments mod works.
+<item> Fixed 'pants' and 'shirt' types so that those textures load correctly on platforms where char is unsigned by default (sf.net bug #28).
+<item> Windows audio: WASAPI-enabled SDL2 dlls function properly now.
+<item> Update the third-party libraries. Other fixes/cleanups.
+</itemize>
+</p>
 
 <sect1> Changes in 0.93.1<p>
 <itemize>
@@ -535,12 +546,11 @@ these patched libSDL binaries may help.
 
 <sect> Contact <p>
 <itemize>
-<item><url url="http://sourceforge.net/projects/quakespasm" name="QuakeSpasm Project page">
-<item><url url="http://sourceforge.net/p/quakespasm/bugs/?source=navbar" name="Bug reports">
-<item><url url="mailto:gmail - dot - com - username - sezeroz" name="Ozkan">,  
-<url url="mailto:gmail - dot - com - username - ewasylishen" name="Eric">,  
-<url url="mailto:gmail - dot - com - username - a.h.vandijk" name="Sander">,  
-<url url="mailto:yahoo - dot - com - username - stevenaaus" name="Stevenaaus">
+<item><url url="https://sourceforge.net/projects/quakespasm/" name="QuakeSpasm Project page">
+<item><url url="https://sourceforge.net/p/quakespasm/bugs/" name="Bug reports">
+<item><url url="mailto:gmail - dot - com - username - sezeroz" name="Ozkan">,
+<url url="mailto:gmail - dot - com - username - ewasylishen" name="Eric">,
+<url url="mailto:gmail - dot - com - username - a.h.vandijk" name="Sander">
 </itemize>
 
 <sect> Links <p>

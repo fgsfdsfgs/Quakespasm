@@ -731,9 +731,14 @@ void Mod_LoadLighting (lump_t *l)
 			i = LittleLong(((int *)data)[1]);
 			if (i == 1)
 			{
-				Con_DPrintf2("%s loaded\n", litfilename);
-				loadmodel->lightdata = data + 8;
-				return;
+				if (8+l->filelen*3 == com_filesize)
+				{
+					Con_DPrintf2("%s loaded\n", litfilename);
+					loadmodel->lightdata = data + 8;
+					return;
+				}
+				Hunk_FreeToLowMark(mark);
+				Con_Printf("Outdated .lit file (%s should be %u bytes, not %u)\n", litfilename, 8+l->filelen*3, com_filesize);
 			}
 			else
 			{
@@ -997,8 +1002,8 @@ void CalcSurfaceExtents (msurface_t *s)
 	mtexinfo_t	*tex;
 	int		bmins[2], bmaxs[2];
 
-	mins[0] = mins[1] = 999999;
-	maxs[0] = maxs[1] = -999999; // FIXME: change these two to FLT_MAX/-FLT_MAX
+	mins[0] = mins[1] = FLT_MAX;
+	maxs[0] = maxs[1] = -FLT_MAX;
 
 	tex = s->texinfo;
 
@@ -1109,8 +1114,8 @@ void Mod_CalcSurfaceBounds (msurface_t *s)
 	int			i, e;
 	mvertex_t	*v;
 
-	s->mins[0] = s->mins[1] = s->mins[2] = 9999;
-	s->maxs[0] = s->maxs[1] = s->maxs[2] = -9999;
+	s->mins[0] = s->mins[1] = s->mins[2] = FLT_MAX;
+	s->maxs[0] = s->maxs[1] = s->maxs[2] = -FLT_MAX;
 
 	for (i=0 ; i<s->numedges ; i++)
 	{
@@ -2136,6 +2141,9 @@ void * Mod_LoadAliasFrame (void * pin, maliasframedesc_t *frame)
 	int				i;
 	daliasframe_t	*pdaliasframe;
 
+	if (posenum >= MAXALIASFRAMES)
+		Sys_Error ("posenum >= MAXALIASFRAMES");
+
 	pdaliasframe = (daliasframe_t *)pin;
 
 	strcpy (frame->name, pdaliasframe->name);
@@ -2199,6 +2207,8 @@ void *Mod_LoadAliasGroup (void * pin,  maliasframedesc_t *frame)
 
 	for (i=0 ; i<numframes ; i++)
 	{
+		if (posenum >= MAXALIASFRAMES) Sys_Error ("posenum >= MAXALIASFRAMES");
+
 		poseverts[posenum] = (trivertx_t *)((daliasframe_t *)ptemp + 1);
 		posenum++;
 
@@ -2411,8 +2421,8 @@ void Mod_CalcAliasBounds (aliashdr_t *a)
 	//clear out all data
 	for (i=0; i<3;i++)
 	{
-		loadmodel->mins[i] = loadmodel->ymins[i] = loadmodel->rmins[i] = 999999;
-		loadmodel->maxs[i] = loadmodel->ymaxs[i] = loadmodel->rmaxs[i] = -999999;
+		loadmodel->mins[i] = loadmodel->ymins[i] = loadmodel->rmins[i] = FLT_MAX;
+		loadmodel->maxs[i] = loadmodel->ymaxs[i] = loadmodel->rmaxs[i] = -FLT_MAX;
 		radius = yawradius = 0;
 	}
 
