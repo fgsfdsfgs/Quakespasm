@@ -31,8 +31,8 @@ include $(DEVKITPRO)/libnx/switch_rules
 #     - <libnx folder>/default_icon.jpg
 #---------------------------------------------------------------------------------
 APP_TITLE	:=	QuakespasmNX
-APP_AUTHOR	:=	fgsfds
-APP_VERSION	:=	0.3.0
+APP_AUTHOR	:=	Quakespasm authors, fgsfds
+APP_VERSION	:=	0.4.0 (0.93.2)
 
 TARGET		:=	quakespasmnx
 BUILD		:=	build
