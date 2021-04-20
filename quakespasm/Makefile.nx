@@ -45,6 +45,7 @@ SOURCEFILES	:=\
 	Quake/snd_vorbis.c \
 	Quake/snd_opus.c \
 	Quake/snd_mpg123.c \
+	Quake/snd_mp3tag.c \
 	Quake/snd_mikmod.c \
 	Quake/snd_xmp.c \
 	Quake/snd_umx.c \
