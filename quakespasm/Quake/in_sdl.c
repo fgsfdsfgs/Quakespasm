@@ -216,13 +216,13 @@ static void IN_ReenableOSXMouseAccel (void)
 #ifdef __SWITCH__
 // sixaxis sensors for gyro aiming
 
-static u32 sixaxis_handles[4] = { 0, 0, 0, 0 };
+static HidSixAxisSensorHandle sixaxis_handles[4];
 
 static void IN_StartupSixaxis (void) 
 {
-	hidGetSixAxisSensorHandles(&sixaxis_handles[0], 2, CONTROLLER_PLAYER_1, TYPE_JOYCON_PAIR);
-	hidGetSixAxisSensorHandles(&sixaxis_handles[2], 1, CONTROLLER_PLAYER_1, TYPE_PROCONTROLLER);
-	hidGetSixAxisSensorHandles(&sixaxis_handles[3], 1, CONTROLLER_HANDHELD, TYPE_HANDHELD);
+	hidGetSixAxisSensorHandles(&sixaxis_handles[0], 2, HidNpadIdType_No1, HidNpadStyleTag_NpadJoyDual);
+	hidGetSixAxisSensorHandles(&sixaxis_handles[2], 1, HidNpadIdType_No1, HidNpadStyleTag_NpadFullKey);
+	hidGetSixAxisSensorHandles(&sixaxis_handles[3], 1, HidNpadIdType_Handheld, HidNpadStyleTag_NpadHandheld);
 	hidStartSixAxisSensor(sixaxis_handles[0]);
 	hidStartSixAxisSensor(sixaxis_handles[1]);
 	hidStartSixAxisSensor(sixaxis_handles[2]);
@@ -751,20 +751,32 @@ void IN_JoyMove (usercmd_t *cmd)
 	if (gyro_enable.value)
 	{
 		// Gyro aiming
-		hidScanInput();
-		SixAxisSensorValues sixaxis = { 0 };
-		hidSixAxisSensorValuesRead(&sixaxis, CONTROLLER_P1_AUTO, 1);
-		float gyroTurn = gyro_turn_axis.value ? sixaxis.gyroscope.y : sixaxis.gyroscope.z;
-		float gyroLook = sixaxis.gyroscope.x;
-		if (gyroTurn || gyroLook)
+		// hidSixAxisSensorValuesRead/CONTROLLER_P1_AUTO do not exist anymore, and we can't check the pad type
+		// because the pad struct is private to SDL. th-thanks for the HID refactor lads
+		// check player 1 and handheld
+		HidSixAxisSensorState sixaxis = { 0 };
+		const u64 stylemask = hidGetNpadStyleSet(HidNpadIdType_No1) | hidGetNpadStyleSet(HidNpadIdType_Handheld);
+		size_t numstates = 0;
+		if (stylemask & HidNpadStyleTag_NpadHandheld)
+			numstates = hidGetSixAxisSensorStates(sixaxis_handles[0], &sixaxis, 1);
+		else if (stylemask & HidNpadStyleTag_NpadFullKey)
+			numstates = hidGetSixAxisSensorStates(sixaxis_handles[1], &sixaxis, 1);
+		else if (stylemask & HidNpadStyleTag_NpadJoyDual) // hope to god right joycon is connected
+			numstates = hidGetSixAxisSensorStates(sixaxis_handles[3], &sixaxis, 1);
+		if (numstates)
 		{
-			// Needed for StopPitchDrift below
-			lookEased.x = gyroTurn;
-			lookEased.y = gyroLook;
-			// Horizontal look controlled by gyro axis Z
-			cl.viewangles[YAW] += lookEased.x * (gyro_invert_x.value ? -100.0 : 100.0) * gyro_sens_z.value * host_frametime;
-			// Vertical look controlled by gyro axis X
-			cl.viewangles[PITCH] -= lookEased.y * (gyro_invert_y.value ? -100.0 : 100.0) * gyro_sens_x.value * host_frametime;
+			const float gyroTurn = gyro_turn_axis.value ? sixaxis.angle.y : sixaxis.angle.z;
+			const float gyroLook = sixaxis.angle.x;
+			if (gyroTurn || gyroLook)
+			{
+				// Needed for StopPitchDrift below
+				lookEased.x = gyroTurn;
+				lookEased.y = gyroLook;
+				// Horizontal look controlled by gyro axis Z
+				cl.viewangles[YAW] += lookEased.x * (gyro_invert_x.value ? -100.0 : 100.0) * gyro_sens_z.value * host_frametime;
+				// Vertical look controlled by gyro axis X
+				cl.viewangles[PITCH] -= lookEased.y * (gyro_invert_y.value ? -100.0 : 100.0) * gyro_sens_x.value * host_frametime;
+			}
 		}
 	}
 #endif // __SWITCH__
