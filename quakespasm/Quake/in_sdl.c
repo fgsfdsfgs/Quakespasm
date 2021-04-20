@@ -758,15 +758,15 @@ void IN_JoyMove (usercmd_t *cmd)
 		const u64 stylemask = hidGetNpadStyleSet(HidNpadIdType_No1) | hidGetNpadStyleSet(HidNpadIdType_Handheld);
 		size_t numstates = 0;
 		if (stylemask & HidNpadStyleTag_NpadHandheld)
-			numstates = hidGetSixAxisSensorStates(sixaxis_handles[0], &sixaxis, 1);
-		else if (stylemask & HidNpadStyleTag_NpadFullKey)
-			numstates = hidGetSixAxisSensorStates(sixaxis_handles[1], &sixaxis, 1);
-		else if (stylemask & HidNpadStyleTag_NpadJoyDual) // hope to god right joycon is connected
 			numstates = hidGetSixAxisSensorStates(sixaxis_handles[3], &sixaxis, 1);
+		else if (stylemask & HidNpadStyleTag_NpadFullKey)
+			numstates = hidGetSixAxisSensorStates(sixaxis_handles[2], &sixaxis, 1);
+		else if (stylemask & HidNpadStyleTag_NpadJoyDual) // hope to god right joycon is connected
+			numstates = hidGetSixAxisSensorStates(sixaxis_handles[1], &sixaxis, 1);
 		if (numstates)
 		{
-			const float gyroTurn = gyro_turn_axis.value ? sixaxis.angle.y : sixaxis.angle.z;
-			const float gyroLook = sixaxis.angle.x;
+			const float gyroTurn = gyro_turn_axis.value ? sixaxis.angular_velocity.y : sixaxis.angular_velocity.z;
+			const float gyroLook = sixaxis.angular_velocity.x;
 			if (gyroTurn || gyroLook)
 			{
 				// Needed for StopPitchDrift below
