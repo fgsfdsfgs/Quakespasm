@@ -851,7 +851,7 @@ void IN_UpdateInputMode (void)
 		SDL_EnableUNICODE(textmode);
 		if (in_debugkeys.value)
 			Con_Printf("SDL_EnableUNICODE %d time: %g\n", textmode, Sys_DoubleTime());
-#else
+#elif !defined(__SWITCH__) // don't do textmode on Switch because it pops up OSK
 		if (textmode)
 		{
 			SDL_StartTextInput();
