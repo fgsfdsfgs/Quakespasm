@@ -1878,8 +1878,8 @@ byte *COM_LoadMallocFile (const char *path, unsigned int *path_id)
 
 byte *COM_LoadMallocFile_TextMode_OSPath (const char *path, long *len_out)
 {
-	FILE	*f;
-	byte	*data;
+	FILE	*f = NULL;
+	byte	*data = NULL;
 	long	len, actuallen;
 	
 	// ericw -- this is used by Host_Loadgame_f. Translate CRLF to LF on load games,
@@ -1892,24 +1892,28 @@ byte *COM_LoadMallocFile_TextMode_OSPath (const char *path, long *len_out)
 	
 	len = COM_filelength (f);
 	if (len < 0)
-		return NULL;
+		goto _err_file;
 	
 	data = (byte *) malloc (len + 1);
 	if (data == NULL)
-		return NULL;
+		goto _err_file;
 
 	// (actuallen < len) if CRLF to LF translation was performed
 	actuallen = fread (data, 1, len, f);
 	if (ferror(f))
-	{
-		free (data);
-		return NULL;
-	}
+		goto _err_file;
 	data[actuallen] = '\0';
 	
 	if (len_out != NULL)
 		*len_out = actuallen;
+	
+	fclose (f);
 	return data;
+
+_err_file:
+	fclose (f);
+	free (data);
+	return NULL;
 }
 
 const char *COM_ParseIntNewline(const char *buffer, int *value)
